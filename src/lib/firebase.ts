@@ -6,6 +6,7 @@ import {
   GoogleAuthProvider,
   signInWithRedirect,
   getRedirectResult,
+  signInWithPopup,
   signInAnonymously,
   signOut,
   setPersistence,
@@ -31,8 +32,9 @@ if (typeof window !== 'undefined') {
   app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig)
 }
 
-export const signInWithGoogle = loginWithGoogleRedirect
-export const getGoogleRedirectResult = async () => null
+// Prefer popup sign-in to avoid redirect loops in dev; redirect remains available.
+export const signInWithGoogle = loginWithGooglePopup
+export const getGoogleRedirectResult = handleRedirectResult
 
 export const auth = app ? getAuth(app) : null
 export const db = app ? getFirestore(app) : null
@@ -52,6 +54,12 @@ if (auth) {
 export async function loginWithGoogleRedirect(): Promise<void> {
   if (!auth || !provider) throw new Error('Firebase not initialized')
   await signInWithRedirect(auth, provider)
+}
+
+// Popup-based sign-in (less likely to cause redirect loops in some browsers)
+export async function loginWithGooglePopup(): Promise<void> {
+  if (!auth || !provider) throw new Error('Firebase not initialized')
+  await signInWithPopup(auth, provider)
 }
 
 // 🔥 OPTIONAL (only if you want redirect result debugging)
