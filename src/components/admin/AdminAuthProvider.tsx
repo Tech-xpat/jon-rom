@@ -59,12 +59,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     if (!auth) { setLoading(false); return }
 
     // 1. Handle redirect result FIRST (fires after Google redirect back to page)
-    getGoogleRedirectResult().then(async (redirectUser) => {
-      if (redirectUser) {
-        console.log('[Admin] Redirect sign-in completed:', redirectUser.email)
-        // onAuthStateChanged will fire next and handle the full flow
-      }
-    })
+    // (This is optional - onAuthStateChanged below will catch the auth state after redirect)
 
     // 2. Subscribe to auth state — fires on page load & after redirect
     const unsub = onAuthChange(async (u: User | null) => {
