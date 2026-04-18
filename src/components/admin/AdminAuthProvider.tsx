@@ -58,10 +58,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!auth) { setLoading(false); return }
 
-    // 1. Handle redirect result FIRST (fires after Google redirect back to page)
-    // (This is optional - onAuthStateChanged below will catch the auth state after redirect)
-
-    // 2. Subscribe to auth state — fires on page load & after redirect
+    // Subscribe to auth state — fires on page load & after redirect
     const unsub = onAuthChange(async (u: User | null) => {
       if (!u) {
         setUser(null)
@@ -71,14 +68,21 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
       }
 
       setUser(u)
+      console.log('[Admin] User authenticated:', u.email)
+      
       const role = await checkRole(u)
+      console.log('[Admin] Role check result:', role, 'for', u.email)
       setAdminRole(role)
 
       if (role) {
+        console.log('[Admin] User is admin, redirecting to /admin')
         // Only redirect to /admin if we're currently on the login page
         if (typeof window !== 'undefined' && window.location.pathname === '/admin/login') {
           router.push('/admin')
         }
+      } else {
+        console.log('[Admin] User is NOT admin, setting error')
+        setError('Your email is not authorized for admin access.')
       }
 
       setLoading(false)
