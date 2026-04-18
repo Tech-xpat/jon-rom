@@ -7,33 +7,36 @@ import AdminSidebar from '@/components/admin/AdminSidebar'
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, adminRole, loading } = useAdminAuth()
-  const router = useRouter()
+  const router  = useRouter()
   const pathname = usePathname()
+  const isLoginPage = pathname === '/admin/login'
 
   useEffect(() => {
     if (loading) return
-    if (pathname === '/admin/login') return
-    // Not logged in → go to login
-    if (!user) { router.push('/admin/login'); return }
-    // Logged in but not an admin → go to login with error
-    if (adminRole === null) { router.push('/admin/login'); return }
-  }, [user, adminRole, loading, pathname, router])
+    if (isLoginPage) return
+    if (!user) { router.replace('/admin/login'); return }
+    if (adminRole === null) { router.replace('/admin/login'); return }
+  }, [user, adminRole, loading, isLoginPage, router])
 
+  // Always show login page immediately
+  if (isLoginPage) return <>{children}</>
+
+  // Show spinner while loading
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-10 h-10 border-2 border-jcvd-red border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-jcvd-gray text-sm tracking-widest">LOADING...</p>
+        <div className="text-center space-y-4">
+          <div className="w-10 h-10 border-2 border-red-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-gray-500 text-xs tracking-[0.3em]">LOADING...</p>
         </div>
       </div>
     )
   }
 
-  if (pathname === '/admin/login') return <>{children}</>
-
+  // Not authenticated yet — show nothing while redirect fires
   if (!user || adminRole === null) return null
 
+  // Authenticated admin — show dashboard
   return (
     <div className="min-h-screen bg-black flex flex-col sm:flex-row">
       <AdminSidebar />

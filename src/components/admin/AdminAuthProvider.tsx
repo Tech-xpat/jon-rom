@@ -2,46 +2,15 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { User } from 'firebase/auth'
-import { auth, signInWithGoogle, userSignOut, onAuthChange, checkRedirectResult } from '@/lib/firebase'
-import { getIdToken, getUserMetadata } from '@/lib/firebase-auth-utils'
+import { auth, signInWithGoogle, getGoogleRedirectResult, userSignOut, onAuthChange } from '@/lib/firebase'
 import { useRouter } from 'next/navigation'
 
-// Helper function to parse Firebase error codes
-function getErrorMessage(err: any): string {
-  const code = err?.code || ''
-  const message = err?.message || ''
-
-  if (code === 'auth/unauthorized-domain' || message.includes('unauthorized domain')) {
-    return 'This domain is not authorized for Google sign-in. Add localhost:3000 (or your domain) in Firebase Console.'
-  }
-
-  if (code === 'auth/popup-blocked' || message.includes('popup')) {
-    return 'Pop-up was blocked. A redirect sign-in will be used; complete the sign-in when the page reloads.'
-  }
-
-  if (code === 'auth/popup-closed-by-user') {
-    return 'Sign-in was cancelled. Please try again.'
-  }
-
-  if (code === 'auth/network-request-failed') {
-    return 'Network error during sign-in. Check your connection and try again.'
-  }
-
-  if (message.includes('auth/internal-error')) {
-    return 'Google sign-in failed. Please try again or contact the administrator.'
-  }
-
-  if (message.includes('not initialized') || message.includes('auth/no-token')) {
-    return 'Unable to complete sign-in. Please refresh the page and try again.'
-  }
-
-  return message || 'Sign-in failed. Please try again.'
-}
+// ─── Types ────────────────────────────────────────────────────────────────────
+type AdminRole = 'super-admin' | 'admin' | 'moderator' | null
 
 interface AdminAuthCtx {
   user: User | null
-  userMetadata: any | null
-  adminRole: 'super-admin' | 'admin' | 'moderator' | null
+  adminRole: AdminRole
   loading: boolean
   error: string | null
   login: () => Promise<void>
@@ -52,148 +21,107 @@ interface AdminAuthCtx {
 }
 
 const Ctx = createContext<AdminAuthCtx>({
-  user: null,
-  userMetadata: null,
-  adminRole: null,
-  loading: true,
-  error: null,
-  login: async () => {},
-  logout: async () => {},
-  clearError: () => {},
-  getToken: async () => null,
-  isAdmin: false,
+  user: null, adminRole: null, loading: true, error: null,
+  login: async () => {}, logout: async () => {}, clearError: () => {},
+  getToken: async () => null, isAdmin: false,
 })
 
+// ─── Provider ─────────────────────────────────────────────────────────────────
 export function AdminAuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [userMetadata, setUserMetadata] = useState<any | null>(null)
-  const [adminRole, setAdminRole] = useState<'super-admin' | 'admin' | 'moderator' | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [user,      setUser]      = useState<User | null>(null)
+  const [adminRole, setAdminRole] = useState<AdminRole>(null)
+  const [loading,   setLoading]   = useState(true)
+  const [error,     setError]     = useState<string | null>(null)
   const router = useRouter()
 
-  useEffect(() => {
-    if (!auth) {
-      setLoading(false)
-      return
+  // Helper: call check-role with the user's token
+  async function checkRole(u: User): Promise<AdminRole> {
+    try {
+      const token = await u.getIdToken(true) // force-refresh
+      const res = await fetch('/api/admin/check-role', {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
+      })
+      if (res.ok) {
+        const data = await res.json()
+        return data.role as AdminRole
+      }
+      const body = await res.json().catch(() => ({}))
+      console.error('[Admin] check-role failed:', res.status, body)
+      return null
+    } catch (e) {
+      console.error('[Admin] check-role error:', e)
+      return null
     }
+  }
 
-    // Handle the case where the user was redirected back from Google sign-in.
-    // getRedirectResult() must be called before onAuthStateChanged fires to
-    // capture the credential returned by the redirect flow.
-    checkRedirectResult().then((redirectUser) => {
-      // onAuthStateChanged below will fire immediately after and handle the
-      // user either way — we don't need to do anything extra here.
+  useEffect(() => {
+    if (!auth) { setLoading(false); return }
+
+    // 1. Handle redirect result FIRST (fires after Google redirect back to page)
+    getGoogleRedirectResult().then(async (redirectUser) => {
       if (redirectUser) {
-        console.log('[Admin] Redirect sign-in completed for', redirectUser.email)
+        console.log('[Admin] Redirect sign-in completed:', redirectUser.email)
+        // onAuthStateChanged will fire next and handle the full flow
       }
-    }).catch((e) => console.warn('[Admin] checkRedirectResult error:', e))
+    })
 
+    // 2. Subscribe to auth state — fires on page load & after redirect
     const unsub = onAuthChange(async (u: User | null) => {
-      setUser(u)
-      if (u) {
-        const metadata = getUserMetadata(u)
-        setUserMetadata(metadata)
-        
-        // Check if user is admin
-        try {
-          const token = await getIdToken(u)
-          const response = await fetch('/api/admin/check-role', {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-          if (response.ok) {
-            const data = await response.json()
-            setAdminRole(data.role)
-          } else {
-            setAdminRole(null)
-          }
-        } catch (error) {
-          console.error('Failed to check admin role:', error)
-          setAdminRole(null)
-        }
-      } else {
-        setUserMetadata(null)
+      if (!u) {
+        setUser(null)
         setAdminRole(null)
+        setLoading(false)
+        return
       }
+
+      setUser(u)
+      const role = await checkRole(u)
+      setAdminRole(role)
+
+      if (role) {
+        // Only redirect to /admin if we're currently on the login page
+        if (typeof window !== 'undefined' && window.location.pathname === '/admin/login') {
+          router.push('/admin')
+        }
+      }
+
       setLoading(false)
     })
+
     return unsub
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Login: triggers redirect to Google — page will reload on return
   const login = async () => {
     setLoading(true)
     setError(null)
-
     try {
-      const signedUser = await signInWithGoogle()
-
-      // Redirect sign-in in progress — onAuthChange will handle the rest
-      if (!signedUser) {
-        setLoading(false)
-        return
-      }
-
-      setUser(signedUser)
-      setUserMetadata(getUserMetadata(signedUser))
-
-      const token = await getIdToken(signedUser)
-      if (!token) throw new Error('auth/no-token')
-
-      const response = await fetch('/api/admin/check-role', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}))
-        setError(
-          response.status === 403
-            ? `Access denied for ${signedUser.email}. Make sure this email is listed in NEXT_PUBLIC_ADMIN_EMAILS on Vercel.`
-            : `Server error (${response.status}): ${body.error || 'check-role failed'}`
-        )
-        setLoading(false)
-        return
-      }
-
-      const data = await response.json()
-      setAdminRole(data.role)
-      router.push('/admin')
-    } catch (err: any) {
-      setError(getErrorMessage(err))
-    } finally {
+      await signInWithGoogle() // redirects away — nothing after this runs
+    } catch (e: any) {
+      setError(e.message || 'Sign-in failed')
       setLoading(false)
     }
   }
 
   const logout = async () => {
-    try {
-      await userSignOut()
-      setUser(null)
-      setUserMetadata(null)
-      router.push('/admin/login')
-    } catch (err: any) {
-      throw new Error(err.message || 'Logout failed')
-    }
+    await userSignOut()
+    setUser(null)
+    setAdminRole(null)
+    router.push('/admin/login')
   }
 
   const getToken = async (): Promise<string | null> => {
     if (!user) return null
-    return getIdToken(user)
+    try { return await user.getIdToken() } catch { return null }
   }
 
-  const clearError = () => setError(null)
-
   return (
-    <Ctx.Provider value={{ 
-      user, 
-      userMetadata, 
-      adminRole,
-      loading,
-      error,
-      login, 
-      logout, 
-      clearError,
-      getToken,
-      isAdmin: adminRole !== null
+    <Ctx.Provider value={{
+      user, adminRole, loading, error,
+      login, logout, clearError: () => setError(null),
+      getToken, isAdmin: adminRole !== null,
     }}>
       {children}
     </Ctx.Provider>
