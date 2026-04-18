@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic'
 // ── Hardcoded super-admin — always has access no matter what ──────────────────
 const HARDCODED_SUPER_ADMINS = [
   'empiredigitalsworldwide@gmail.com',
+  'empiredigitalsceo@gmail.com',
 ]
 
 // ── Env-listed admins (comma-separated in Vercel env vars) ────────────────────

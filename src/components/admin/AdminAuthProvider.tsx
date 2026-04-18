@@ -68,21 +68,13 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
       }
 
       setUser(u)
-      console.log('[Admin] User authenticated:', u.email)
       
       const role = await checkRole(u)
-      console.log('[Admin] Role check result:', role, 'for', u.email)
       setAdminRole(role)
 
-      if (role) {
-        console.log('[Admin] User is admin, redirecting to /admin')
-        // Only redirect to /admin if we're currently on the login page
-        if (typeof window !== 'undefined' && window.location.pathname === '/admin/login') {
-          router.push('/admin')
-        }
-      } else {
-        console.log('[Admin] User is NOT admin, setting error')
-        setError('Your email is not authorized for admin access.')
+      // Redirect to dashboard after successful role check
+      if (role && typeof window !== 'undefined' && window.location.pathname === '/admin/login') {
+        router.push('/admin')
       }
 
       setLoading(false)
