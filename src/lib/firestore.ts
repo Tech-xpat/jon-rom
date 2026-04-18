@@ -193,7 +193,12 @@ export async function getAdmins(): Promise<Admin[]> {
 }
 
 export async function getAdmin(email: string): Promise<Admin | null> {
-  const snap = await getDb().collection('admins').where('email', '==', email).limit(1).get()
+  const normalized = email.toLowerCase().trim()
+  // Try lowercase match first
+  let snap = await getDb().collection('admins').where('email', '==', normalized).limit(1).get()
+  if (snap.docs.length > 0) return { id: snap.docs[0].id, ...snap.docs[0].data() } as Admin
+  // Fallback: original case (handles docs stored before normalization)
+  snap = await getDb().collection('admins').where('email', '==', email.trim()).limit(1).get()
   return snap.docs.length > 0 ? ({ id: snap.docs[0].id, ...snap.docs[0].data() } as Admin) : null
 }
 

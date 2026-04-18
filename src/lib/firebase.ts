@@ -9,6 +9,7 @@ import {
   browserLocalPersistence,
   onAuthStateChanged,
   signInWithRedirect,
+  getRedirectResult,
 } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
@@ -52,21 +53,33 @@ export const googleProvider = app ? new GoogleAuthProvider() : null
 if (googleProvider) {
   googleProvider.addScope('profile')
   googleProvider.addScope('email')
+  // Force account selection every time so the right admin email is chosen
+  googleProvider.setCustomParameters({ prompt: 'select_account' })
 }
 
-// ─── Auth Persistence ────────────────────────────────────────────────────────
+// ─── Auth Persistence ─────────────────────────────────────────────────────────
 if (auth && typeof window !== 'undefined') {
-  setPersistence(auth, browserLocalPersistence)
-    .then(() => console.log('[Firebase] Persistence enabled'))
-    .catch((err) => console.warn('[Firebase] Persistence warning:', err.message))
+  setPersistence(auth, browserLocalPersistence).catch((err) =>
+    console.warn('[Firebase] Persistence warning:', err.message)
+  )
 }
 
-// ─── Authorized Admin Emails ──────────────────────────────────────────────────
-const AUTHORIZED_EMAILS: string[] = (
-  process.env.NEXT_PUBLIC_ADMIN_EMAILS || ''
-).split(',').map((e) => e.trim()).filter(Boolean)
+// ─── Check for redirect result (called on page load after redirect sign-in) ───
+export async function checkRedirectResult() {
+  if (!auth) return null
+  try {
+    const result = await getRedirectResult(auth)
+    return result?.user ?? null
+  } catch (err: any) {
+    console.error('[Firebase] getRedirectResult error:', err.code, err.message)
+    return null
+  }
+}
 
-// ─── Google Sign In (Admin only) ──────────────────────────────────────────────
+// ─── Google Sign In ───────────────────────────────────────────────────────────
+// Returns the signed-in User on success.
+// Returns null if a redirect was initiated (page will reload).
+// Throws on unrecoverable errors.
 export async function signInWithGoogle() {
   if (!auth) throw new Error('Firebase auth is not initialized')
   if (!googleProvider) throw new Error('Google provider not configured')
@@ -75,23 +88,28 @@ export async function signInWithGoogle() {
     const result = await signInWithPopup(auth, googleProvider)
     return result.user
   } catch (err: any) {
-    const msg = err?.message || ''
     const code = err?.code || ''
-    // If popup is blocked or not allowed in this environment, fall back to redirect
-    if (code === 'auth/popup-blocked' || msg.includes('popup')) {
-      try {
-        await signInWithRedirect(auth, googleProvider)
-        // Redirect will take over the flow; return null to indicate redirect in progress
-        return null
-      } catch (redirErr: any) {
-        throw redirErr
-      }
+    const msg  = err?.message || ''
+
+    // These errors mean the popup was blocked or killed by COOP headers —
+    // fall through to redirect sign-in automatically.
+    const needsRedirect =
+      code === 'auth/popup-blocked' ||
+      code === 'auth/popup-closed-by-user' ||
+      code === 'auth/cancelled-popup-request' ||
+      msg.includes('Cross-Origin-Opener-Policy') ||
+      msg.includes('popup')
+
+    if (needsRedirect) {
+      await signInWithRedirect(auth, googleProvider)
+      return null // page will reload; onAuthChange will pick up the result
     }
+
     throw err
   }
 }
 
-// ─── User Google Sign In ───────────────────────────────────────────────────────
+// ─── User Google Sign In (public-facing, separate from admin) ─────────────────
 export async function userSignInWithGoogle() {
   if (!auth) throw new Error('Firebase auth is not initialized')
   if (!googleProvider) throw new Error('Google provider not configured')

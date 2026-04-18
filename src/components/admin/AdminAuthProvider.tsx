@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { User } from 'firebase/auth'
-import { auth, signInWithGoogle, userSignOut, onAuthChange } from '@/lib/firebase'
+import { auth, signInWithGoogle, userSignOut, onAuthChange, checkRedirectResult } from '@/lib/firebase'
 import { getIdToken, getUserMetadata } from '@/lib/firebase-auth-utils'
 import { useRouter } from 'next/navigation'
 
@@ -78,6 +78,17 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    // Handle the case where the user was redirected back from Google sign-in.
+    // getRedirectResult() must be called before onAuthStateChanged fires to
+    // capture the credential returned by the redirect flow.
+    checkRedirectResult().then((redirectUser) => {
+      // onAuthStateChanged below will fire immediately after and handle the
+      // user either way — we don't need to do anything extra here.
+      if (redirectUser) {
+        console.log('[Admin] Redirect sign-in completed for', redirectUser.email)
+      }
+    }).catch((e) => console.warn('[Admin] checkRedirectResult error:', e))
+
     const unsub = onAuthChange(async (u: User | null) => {
       setUser(u)
       if (u) {
@@ -116,9 +127,8 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     try {
       const signedUser = await signInWithGoogle()
 
-      // signInWithGoogle may return null when a redirect sign-in was initiated
+      // Redirect sign-in in progress — onAuthChange will handle the rest
       if (!signedUser) {
-        // Redirect sign-in in progress; stop further work here and let onAuthChange handle role check
         setLoading(false)
         return
       }
@@ -127,18 +137,20 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
       setUserMetadata(getUserMetadata(signedUser))
 
       const token = await getIdToken(signedUser)
-      if (!token) {
-        throw new Error('auth/no-token')
-      }
+      if (!token) throw new Error('auth/no-token')
 
       const response = await fetch('/api/admin/check-role', {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       })
 
       if (!response.ok) {
-        await userSignOut()
-        setAdminRole(null)
-        setError('You are not authorized to access the admin panel.')
+        const body = await response.json().catch(() => ({}))
+        setError(
+          response.status === 403
+            ? `Access denied for ${signedUser.email}. Make sure this email is listed in NEXT_PUBLIC_ADMIN_EMAILS on Vercel.`
+            : `Server error (${response.status}): ${body.error || 'check-role failed'}`
+        )
+        setLoading(false)
         return
       }
 

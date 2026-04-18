@@ -31,37 +31,17 @@ const AUTHORIZED_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '')
 
 export async function verifyAdminRequest(req: Request): Promise<boolean> {
   try {
-    // Development bypass: allow any signed-in user when explicitly enabled for local testing
-    const DEV_ALLOW = process.env.FIREBASE_DEV_ALLOW_ALL === 'true' && process.env.NODE_ENV !== 'production'
-
-    if (!adminAuth || !adminDb) {
-      if (DEV_ALLOW) {
-        const token = req.headers.get('Authorization')?.replace('Bearer ', '')
-        return !!token
-      }
+    if (!adminAuth) {
+      console.error('[Firebase Admin] adminAuth not initialized — check FIREBASE_ADMIN_* env vars on Vercel')
       return false
     }
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '')
+    const token = req.headers.get('Authorization')?.replace('Bearer ', '').trim()
     if (!token) return false
-    const decoded = await adminAuth.verifyIdToken(token)
-    const email = (decoded.email || '').toLowerCase().trim()
-
-    if (DEV_ALLOW) return true
-
-    // Case-insensitive check against env-listed emails
-    const normalizedList = AUTHORIZED_EMAILS.map((e) => e.toLowerCase().trim())
-    if (normalizedList.includes(email)) {
-      return true
-    }
-
-    // Fallback: check Firestore admins collection (case-insensitive)
-    const snap = await adminDb.collection('admins').where('email', '==', email).limit(1).get()
-    if (snap.size > 0) return true
-
-    // Also try original-case stored email in Firestore
-    const snapOrig = await adminDb.collection('admins').where('email', '==', decoded.email).limit(1).get()
-    return snapOrig.size > 0
-  } catch {
+    // Only verify the token is a valid Firebase ID token — role check is done in check-role route
+    await adminAuth.verifyIdToken(token)
+    return true
+  } catch (err: any) {
+    console.error('[Firebase Admin] verifyAdminRequest failed:', err?.code || err?.message)
     return false
   }
 }

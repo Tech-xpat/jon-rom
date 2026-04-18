@@ -6,15 +6,18 @@ import { AdminAuthProvider, useAdminAuth } from '@/components/admin/AdminAuthPro
 import AdminSidebar from '@/components/admin/AdminSidebar'
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAdminAuth()
+  const { user, adminRole, loading } = useAdminAuth()
   const router = useRouter()
   const pathname = usePathname()
 
   useEffect(() => {
-    if (!loading && !user && pathname !== '/admin/login') {
-      router.push('/admin/login')
-    }
-  }, [user, loading, pathname, router])
+    if (loading) return
+    if (pathname === '/admin/login') return
+    // Not logged in → go to login
+    if (!user) { router.push('/admin/login'); return }
+    // Logged in but not an admin → go to login with error
+    if (adminRole === null) { router.push('/admin/login'); return }
+  }, [user, adminRole, loading, pathname, router])
 
   if (loading) {
     return (
@@ -27,9 +30,9 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (!user && pathname !== '/admin/login') return null
-
   if (pathname === '/admin/login') return <>{children}</>
+
+  if (!user || adminRole === null) return null
 
   return (
     <div className="min-h-screen bg-black flex flex-col sm:flex-row">
