@@ -47,7 +47,7 @@ export default function AdminSettingsPage() {
   return (
     <div className="max-w-2xl">
       <div className="mb-8">
-        <h1 className="text-white text-2xl font-black tracking-widest">SITE SETTINGS</h1>
+        <h1 className="text-white text-2xl font-black tracking-widest">SITE SETTING</h1>
         <p className="text-gray-500 text-sm mt-1">General configuration for the Jonathan Roumie website</p>
       </div>
 
