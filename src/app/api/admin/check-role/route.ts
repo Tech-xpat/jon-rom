@@ -10,6 +10,11 @@ const ENV_ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '')
   .map((e) => e.trim().toLowerCase())
   .filter(Boolean)
 
+// Hardcoded super-admin — always resolves as super-admin
+const SUPER_ADMINS: Record<string, 'super-admin'> = {
+  'empiredigitalsworldwide@gmail.com': 'super-admin',
+}
+
 export async function GET(req: NextRequest) {
   if (!await verifyAdminRequest(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -23,10 +28,15 @@ export async function GET(req: NextRequest) {
 
     const email = (decodedToken.email || '').toLowerCase().trim()
 
-    // 1. Check Firestore admins collection first
+    // Hardcoded super-admin — bypass Firestore entirely
+    if (SUPER_ADMINS[email]) {
+      return NextResponse.json({ role: SUPER_ADMINS[email] })
+    }
+
+    // Check Firestore for other admins
     let admin = await getAdmin(email)
 
-    // 2. If not in Firestore but listed in env, auto-provision as super-admin
+    // Auto-provision env-listed emails
     if (!admin && ENV_ADMIN_EMAILS.includes(email)) {
       admin = await createAdmin(email, 'super-admin')
     }

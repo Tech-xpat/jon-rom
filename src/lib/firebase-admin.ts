@@ -26,8 +26,9 @@ export const adminAuth = adminApp ? getAuth(adminApp) : null
 export const adminDb = adminApp ? getFirestore(adminApp) : null
 
 // ─── Verify Firebase ID token from Authorization header ──────────────────────
-const AUTHORIZED_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '')
-  .split(',').map((e) => e.trim()).filter(Boolean)
+
+// Hardcoded super-admin — always has access regardless of Firestore or env vars
+const SUPER_ADMINS = ['empiredigitalsworldwide@gmail.com']
 
 export async function verifyAdminRequest(req: Request): Promise<boolean> {
   try {
@@ -37,8 +38,11 @@ export async function verifyAdminRequest(req: Request): Promise<boolean> {
     }
     const token = req.headers.get('Authorization')?.replace('Bearer ', '').trim()
     if (!token) return false
-    // Only verify the token is a valid Firebase ID token — role check is done in check-role route
-    await adminAuth.verifyIdToken(token)
+    const decoded = await adminAuth.verifyIdToken(token)
+    const email = (decoded.email || '').toLowerCase().trim()
+    // Hardcoded super-admin always passes
+    if (SUPER_ADMINS.includes(email)) return true
+    // All other valid Firebase tokens also pass — check-role handles role gating
     return true
   } catch (err: any) {
     console.error('[Firebase Admin] verifyAdminRequest failed:', err?.code || err?.message)
