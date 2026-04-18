@@ -6,7 +6,7 @@ import { AdminAuthProvider, useAdminAuth } from '@/components/admin/AdminAuthPro
 import AdminSidebar from '@/components/admin/AdminSidebar'
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, adminRole, loading } = useAdminAuth()
+  const { user, adminRole, loading, error } = useAdminAuth()
   const router  = useRouter()
   const pathname = usePathname()
   const isLoginPage = pathname === '/admin/login'
@@ -15,8 +15,12 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     if (loading) return
     if (isLoginPage) return
     if (!user) { router.replace('/admin/login'); return }
-    if (adminRole === null) { router.replace('/admin/login'); return }
-  }, [user, adminRole, loading, isLoginPage, router])
+    if (adminRole === null && error) { 
+      // User logged in but not an admin — redirect to login with error
+      router.replace('/admin/login')
+      return 
+    }
+  }, [user, adminRole, loading, isLoginPage, router, error])
 
   // Always show login page immediately
   if (isLoginPage) return <>{children}</>
@@ -34,17 +38,21 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   // Not authenticated yet — show nothing while redirect fires
-  if (!user || adminRole === null) return null
+  if (!user || (adminRole === null && !error)) return null
 
   // Authenticated admin — show dashboard
-  return (
-    <div className="min-h-screen bg-black flex flex-col sm:flex-row">
-      <AdminSidebar />
-      <main className="flex-1 overflow-auto">
-        <div className="p-4 sm:p-8 mt-14 sm:mt-0">{children}</div>
-      </main>
-    </div>
-  )
+  if (user && adminRole) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col sm:flex-row">
+        <AdminSidebar />
+        <main className="flex-1 overflow-auto">
+          <div className="p-4 sm:p-8 mt-14 sm:mt-0">{children}</div>
+        </main>
+      </div>
+    )
+  }
+
+  return null
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
