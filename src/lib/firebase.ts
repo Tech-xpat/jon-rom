@@ -31,7 +31,6 @@ if (typeof window !== 'undefined') {
   app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig)
 }
 
-<<<<<<< HEAD
 export const signInWithGoogle = loginWithGoogleRedirect
 export const getGoogleRedirectResult = async () => null
 
@@ -39,12 +38,6 @@ export const auth = app ? getAuth(app) : null
 export const db = app ? getFirestore(app) : null
 export const storage = app ? getStorage(app) : null
 
-=======
-export const auth = app ? getAuth(app) : null
-export const db = app ? getFirestore(app) : null
-export const storage = app ? getStorage(app) : null
-
->>>>>>> a39385f3bd5fd5ce017493827e92a41b1631d324
 const provider = app ? new GoogleAuthProvider() : null
 
 if (provider) {
