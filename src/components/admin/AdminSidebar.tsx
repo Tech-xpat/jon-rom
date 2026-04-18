@@ -14,6 +14,8 @@ const nav = [
   { href: '/admin/users', label: 'Users & Whitelist', icon: Shield },
   { href: '/admin/payments', label: 'Payments', icon: CreditCard },
   { href: '/admin/wallets', label: 'Crypto Wallets', icon: Package },
+  { href: '/admin/rewards', label: 'Rewards', icon: Package },
+  { href: '/admin/admins', label: 'Admin Users', icon: Shield },
   { href: '/admin/catalog', label: 'Catalog Content', icon: Image },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]

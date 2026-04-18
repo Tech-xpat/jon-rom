@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { UserPlus, Shield, Trash2, Edit, Check, X } from 'lucide-react'
+import { UserPlus, Shield, Trash2, Edit, Check, X, AlertCircle } from 'lucide-react'
 import { useAdminAuth } from '@/components/admin/AdminAuthProvider'
 
 interface AdminUser {
@@ -12,6 +12,12 @@ interface AdminUser {
   verified: boolean
   createdAt: string
 }
+
+// Hardcoded super admin emails that cannot be removed
+const PROTECTED_ADMINS = [
+  'empiredigitalsworldwide@gmail.com',
+  'empiredigitalsceo@gmail.com',
+]
 
 export default function AdminManagementPage() {
   const { getToken, user, adminRole } = useAdminAuth()
@@ -105,6 +111,11 @@ export default function AdminManagementPage() {
   const removeAdmin = async (adminId: string, adminEmail: string) => {
     if (adminEmail === user?.email) {
       alert('You cannot remove yourself')
+      return
+    }
+
+    if (PROTECTED_ADMINS.includes(adminEmail)) {
+      alert(`Cannot remove ${adminEmail} - this is a protected super admin account`)
       return
     }
 
@@ -203,12 +214,17 @@ export default function AdminManagementPage() {
           <div className="divide-y divide-white/10">
             {admins.map((admin) => (
               <div key={admin.id} className="p-6 flex items-center justify-between">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-1">
                   <div className="w-10 h-10 bg-red-900/30 border border-red-800/50 rounded-full flex items-center justify-center">
                     <Shield size={20} className="text-red-400" />
                   </div>
-                  <div>
-                    <h3 className="text-white font-semibold">{admin.email}</h3>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-white font-semibold">{admin.email}</h3>
+                      {PROTECTED_ADMINS.includes(admin.email) && (
+                        <span className="bg-red-600 text-white text-xs px-2 py-1 rounded font-semibold">PROTECTED</span>
+                      )}
+                    </div>
                     <p className="text-gray-400 text-sm">
                       Added {new Date(admin.createdAt).toLocaleDateString()}
                     </p>
@@ -237,8 +253,9 @@ export default function AdminManagementPage() {
 
                     <button
                       onClick={() => removeAdmin(admin.id, admin.email)}
-                      disabled={admin.email === user?.email}
-                      className="text-red-400 hover:text-red-300 disabled:text-gray-600 disabled:cursor-not-allowed p-1"
+                      disabled={admin.email === user?.email || PROTECTED_ADMINS.includes(admin.email)}
+                      className="text-red-400 hover:text-red-300 disabled:text-gray-600 disabled:cursor-not-allowed p-1 transition-colors"
+                      title={PROTECTED_ADMINS.includes(admin.email) ? 'This is a protected super admin' : ''}
                     >
                       <Trash2 size={16} />
                     </button>
