@@ -3,7 +3,7 @@
  * Helper functions for testing authentication flows during development
  */
 
-import { auth, userSignInWithGoogle, userSignOut } from './firebase'
+import { auth, signInWithGoogle, userSignOut } from './firebase'
 import { User } from 'firebase/auth'
 
 /**
@@ -91,10 +91,8 @@ export async function debugGetTokenClaims() {
 export async function testGoogleSignIn() {
   try {
     console.log('[Firebase] Starting Google sign-in test...')
-    const credential = await userSignInWithGoogle()
-    const user = credential.user
-    console.log('[Firebase] Google sign-in successful:', user.email)
-    return user
+    await signInWithGoogle()
+    console.log('[Firebase] Google sign-in initiated - will redirect')
   } catch (err: any) {
     console.error('[Firebase] Google sign-in failed:', err.message)
     throw err
