@@ -25,6 +25,13 @@ export async function GET(req: NextRequest) {
 
     if (adminDoc.exists) {
       const data = adminDoc.data()
+      if (!data) {
+        console.warn('[check-role] Admin document exists but has no data:', email)
+        return NextResponse.json(
+          { error: 'Admin data corrupted', authorized: false },
+          { status: 403 }
+        )
+      }
       const role = data.role || 'admin'
       console.log('[check-role] Admin verified with role:', role)
       return NextResponse.json({ 
