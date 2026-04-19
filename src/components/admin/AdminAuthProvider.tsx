@@ -5,7 +5,8 @@ import {
   signInWithEmailAndPassword, 
   signOut, 
   onAuthStateChanged,
-  AuthError
+  AuthError,
+  updatePassword
 } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
 import { doc, getDoc } from 'firebase/firestore'
@@ -20,6 +21,7 @@ interface AdminAuthCtx {
   error: string | null
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>
   clearError: () => void
   getToken: () => Promise<string | null>
   isAdmin: boolean
@@ -27,8 +29,8 @@ interface AdminAuthCtx {
 
 const Ctx = createContext<AdminAuthCtx>({
   user: null, adminRole: null, loading: false, error: null,
-  login: async () => {}, logout: async () => {}, clearError: () => {},
-  getToken: async () => null, isAdmin: false,
+  login: async () => {}, logout: async () => {}, changePassword: async () => {},
+  clearError: () => {}, getToken: async () => null, isAdmin: false,
 })
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
@@ -154,6 +156,40 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    setLoading(true)
+    setError(null)
+    try {
+      if (!auth?.currentUser) {
+        throw new Error('No authenticated user')
+      }
+
+      // First verify current password by attempting to re-authenticate
+      const userEmail = auth.currentUser.email
+      if (!userEmail) {
+        throw new Error('User email not available')
+      }
+
+      // Re-authenticate with current password
+      try {
+        await signInWithEmailAndPassword(auth, userEmail, currentPassword)
+      } catch (reauthError: any) {
+        throw new Error('Current password is incorrect')
+      }
+
+      // Update password
+      await updatePassword(auth.currentUser, newPassword)
+      console.log('[Admin Auth] Password updated successfully')
+    } catch (e: any) {
+      const errorMsg = getPasswordChangeErrorMessage(e)
+      console.error('[Admin Auth] Password change error:', errorMsg)
+      setError(errorMsg)
+      throw e
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const getToken = async () => {
     if (auth?.currentUser) {
       try {
@@ -169,7 +205,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={{
       user, adminRole, loading, error,
-      login, logout, clearError: () => setError(null),
+      login, logout, changePassword, clearError: () => setError(null),
       getToken, isAdmin: adminRole !== null,
     }}>
       {children}
@@ -197,6 +233,23 @@ function getFirebaseErrorMessage(error: AuthError): string {
     default:
       return error.message || 'Login failed'
   }
+}
+
+// Helper function to convert password change errors to user-friendly messages
+function getPasswordChangeErrorMessage(error: any): string {
+  const message = error.message || ''
+  
+  if (message.includes('Current password is incorrect')) {
+    return 'Current password is incorrect'
+  }
+  if (message.includes('weak-password')) {
+    return 'New password is too weak. Please choose a stronger password.'
+  }
+  if (message.includes('requires-recent-login')) {
+    return 'Please log in again before changing your password.'
+  }
+  
+  return 'Failed to change password. Please try again.'
 }
 
 export const useAdminAuth = () => useContext(Ctx)

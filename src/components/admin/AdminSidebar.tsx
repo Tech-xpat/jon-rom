@@ -67,8 +67,8 @@ export default function AdminSidebar() {
       <div className="p-3 sm:p-4 border-t border-white/5">
         {user && (
           <div className="mb-3 px-3 hidden sm:block">
-            <p className="text-white text-xs font-medium truncate">{user.displayName}</p>
-            <p className="text-jcvd-gray text-[10px] truncate">{user.email}</p>
+            <p className="text-white text-xs font-medium truncate">{user.email}</p>
+            <p className="text-jcvd-gray text-[10px] truncate">Admin</p>
           </div>
         )}
         <button

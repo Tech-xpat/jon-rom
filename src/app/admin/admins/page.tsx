@@ -27,6 +27,10 @@ export default function AdminManagementPage() {
   const [newAdminEmail, setNewAdminEmail] = useState('')
   const [adding, setAdding] = useState(false)
 
+  useEffect(() => {
+    loadAdmins()
+  }, [])
+
   if (adminRole !== 'super-admin') {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
