@@ -2,14 +2,17 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Shield, AlertCircle, Loader2 } from 'lucide-react'
+import { Shield, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react'
 import { useAdminAuth } from '@/components/admin/AdminAuthProvider'
 import { useRouter } from 'next/navigation'
 
 export default function AdminLoginPage() {
-  const { loginWithEmail, loading, error, clearError, user, adminRole } = useAdminAuth()
+  const { login, loading, error, clearError, user, adminRole } = useAdminAuth()
   const router = useRouter()
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // If already authenticated, redirect immediately
   useEffect(() => {
@@ -18,12 +21,17 @@ export default function AdminLoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSubmitting(true)
     try {
-      await loginWithEmail(email)
+      await login(email, password)
     } catch (e) {
       console.error('[v0] Login failed:', e)
+    } finally {
+      setIsSubmitting(false)
     }
   }
+
+  const isLoading = loading || isSubmitting
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4"
@@ -56,14 +64,14 @@ export default function AdminLoginPage() {
             >
               <AlertCircle className="text-red-400 flex-shrink-0 w-5 h-5 mt-0.5" />
               <div>
-                <p className="text-red-300 text-sm font-semibold mb-1">Access Denied</p>
+                <p className="text-red-300 text-sm font-semibold mb-1">Authentication Failed</p>
                 <p className="text-red-400/80 text-xs leading-relaxed font-mono break-words">{error}</p>
                 <button onClick={clearError} className="text-red-400 text-xs underline mt-2 hover:text-red-300">Dismiss</button>
               </div>
             </motion.div>
           )}
 
-          {loading ? (
+          {isLoading ? (
             <div className="flex flex-col items-center gap-3 py-4">
               <Loader2 size={28} className="text-red-500 animate-spin" />
               <p className="text-gray-400 text-sm text-center">Authenticating...</p>
@@ -71,23 +79,45 @@ export default function AdminLoginPage() {
           ) : (
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="block text-gray-400 text-xs mb-2 tracking-wide">Admin Email</label>
+                <label className="block text-gray-400 text-xs mb-2 tracking-wide">Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="empiredigitalsworldwide@gmail.com"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-600 text-sm focus:outline-none focus:border-red-500/50 transition"
-                  disabled={loading}
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-transparent text-sm focus:outline-none focus:border-red-500/50 transition"
+                  disabled={isLoading}
                   required
+                  autoComplete="email"
                 />
-                <p className="text-gray-600 text-xs mt-2">Authorized emails only</p>
+              </div>
+
+              <div>
+                <label className="block text-gray-400 text-xs mb-2 tracking-wide">Password</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 pr-10 text-white placeholder-transparent text-sm focus:outline-none focus:border-red-500/50 transition"
+                    disabled={isLoading}
+                    required
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
 
               <button
                 type="submit"
-                disabled={loading || !email}
-                className="w-full bg-red-600 text-white py-3 rounded-lg font-bold tracking-wide hover:bg-red-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoading || !email || !password}
+                className="w-full bg-red-600 text-white py-3 rounded-lg font-bold tracking-wide hover:bg-red-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-6"
               >
                 Sign In
               </button>

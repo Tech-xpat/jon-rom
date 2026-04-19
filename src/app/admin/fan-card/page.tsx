@@ -1,47 +1,53 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Save, CreditCard } from 'lucide-react'
-import { useAdminAuth } from '@/components/admin/AdminAuthProvider'
+import { Save, Loader2 } from 'lucide-react'
+import { useFirestoreListener } from '@/hooks/useFirestoreListener'
+import { useFirestoreSync } from '@/hooks/useFirestoreSync'
 import type { FanCardSettings } from '@/lib/firestore'
 
 export default function AdminFanCardPage() {
-  const { getToken } = useAdminAuth()
+  const { data: firestoreSettings, loading, error: listenerError } = useFirestoreListener<FanCardSettings>('pageSettings', 'fanCard')
+  const { sync, isSyncing, error: syncError } = useFirestoreSync('pageSettings')
+  
   const [settings, setSettings] = useState<FanCardSettings>({
-    price: 5000, background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)',
-    accentColor: '#FF0000', logoUrl: '/images/jvcd-avatar.jpg', footerText: 'OFFICIAL JONATHAN ROUMIE WORLD FAN CARD',
+    price: 5000, 
+    background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)',
+    accentColor: '#FF0000', 
+    logoUrl: '/images/jvcd-avatar.jpg', 
+    footerText: 'OFFICIAL JONATHAN ROUMIE WORLD FAN CARD',
   })
   const [antiScreenshot, setAntiScreenshot] = useState(true)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
-  async function headers() {
-    const t = await getToken()
-    return { 'Content-Type': 'application/json', Authorization: `Bearer ${t}` }
-  }
-
+  // Sync Firestore data to local state
   useEffect(() => {
-    async function load() {
-      const h = await headers()
-      const res = await fetch('/api/admin/settings/fan-card', { headers: h })
-      if (res.ok) setSettings(await res.json())
-      setLoading(false)
+    if (firestoreSettings) {
+      console.log('[v0] Syncing Firestore fan card settings to state:', firestoreSettings)
+      setSettings(firestoreSettings)
     }
-    load()
-  }, [])
+  }, [firestoreSettings])
 
-  async function save() {
-    setSaving(true)
-    const h = await headers()
-    await fetch('/api/admin/settings/fan-card', { method: 'PUT', headers: h, body: JSON.stringify(settings) })
-    setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  const handleSave = async () => {
+    try {
+      console.log('[v0] Saving fan card settings:', settings)
+      await sync('fanCard', settings)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (e) {
+      console.error('[v0] Save failed:', e)
+    }
   }
 
-  if (loading) return <div className="text-gray-500 text-sm">Loading...</div>
+  if (loading) return (
+    <div className="flex items-center justify-center h-96">
+      <div className="text-center">
+        <Loader2 size={32} className="text-red-500 animate-spin mx-auto mb-3" />
+        <p className="text-gray-400 text-sm">Loading fan card settings...</p>
+      </div>
+    </div>
+  )
 
   return (
     <div className="max-w-2xl">
@@ -123,10 +129,29 @@ export default function AdminFanCardPage() {
           </label>
         </div>
 
-        <button onClick={save} disabled={saving}
+        {syncError && (
+          <div className="bg-red-950/40 border border-red-800/60 rounded-lg p-3 mb-4">
+            <p className="text-red-400 text-sm">{syncError}</p>
+          </div>
+        )}
+        
+        <button onClick={handleSave} disabled={isSyncing}
           className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-xl text-sm font-bold tracking-wide hover:bg-red-700 transition-colors disabled:opacity-50">
-          <Save size={16} />
-          {saved ? '✓ Saved!' : saving ? 'Saving...' : 'Save Settings'}
+          {isSyncing ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              Saving...
+            </>
+          ) : saved ? (
+            <>
+              <span>✓ Saved to Firestore!</span>
+            </>
+          ) : (
+            <>
+              <Save size={16} />
+              Save Settings
+            </>
+          )}
         </button>
       </div>
     </div>

@@ -1,39 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { adminDb } from '@/lib/firebase-admin'
 
 export const dynamic = 'force-dynamic'
 
-// ─── Authorized Super Admin Emails ────────────────────────────────────────────
-const SUPER_ADMIN_EMAILS = [
-  'empiredigitalsworldwide@gmail.com',
-  'empiredigitalsceo@gmail.com',
-]
-
 export async function GET(req: NextRequest) {
   try {
-    // Extract email from query params or header
+    // Extract email from query params
     const email = (req.nextUrl.searchParams.get('email') || '').trim().toLowerCase()
     
     if (!email) {
       return NextResponse.json({ error: 'Email required' }, { status: 400 })
     }
 
-    // Check if email is authorized
-    if (SUPER_ADMIN_EMAILS.includes(email)) {
+    console.log('[check-role] Verifying admin role for:', email)
+
+    // Check Firestore admins collection
+    if (!adminDb) {
+      console.warn('[check-role] Firestore admin not initialized')
+      return NextResponse.json({ error: 'Database not initialized' }, { status: 500 })
+    }
+
+    const adminDocRef = adminDb.collection('admins').doc(email)
+    const adminDoc = await adminDocRef.get()
+
+    if (adminDoc.exists) {
+      const data = adminDoc.data()
+      const role = data.role || 'admin'
+      console.log('[check-role] Admin verified with role:', role)
       return NextResponse.json({ 
-        role: 'super-admin', 
+        role, 
         email,
-        authorized: true 
+        authorized: true,
+        verified: data.verified !== false
       })
     }
 
-    // Email not authorized
-    console.warn('[check-role] Unauthorized access attempt:', email)
+    // Email not in admins collection
+    console.warn('[check-role] Email not found in admins collection:', email)
     return NextResponse.json(
       { error: 'Email not authorized for admin access', authorized: false },
       { status: 403 }
     )
   } catch (e: any) {
     console.error('[check-role] Error:', e.message)
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Server error', details: e.message }, { status: 500 })
   }
 }
