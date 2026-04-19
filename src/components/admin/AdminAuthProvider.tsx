@@ -88,7 +88,9 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
           } else {
             // Not an admin, sign them out
             console.warn('[Admin Auth] User is not an admin, signing out')
-            await signOut(auth)
+            if (auth) {
+              await signOut(auth)
+            }
             setUser(null)
             setAdminRole(null)
             setError('Your email is not authorized for admin access')
