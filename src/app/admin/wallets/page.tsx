@@ -2,69 +2,47 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Bitcoin, Save, AlertCircle, Check } from 'lucide-react'
-import { useAdminAuth } from '@/components/admin/AdminAuthProvider'
+import { Bitcoin, Save, AlertCircle, Check, Loader2 } from 'lucide-react'
+import { useFirestoreListener } from '@/hooks/useFirestoreListener'
+import { useFirestoreSync } from '@/hooks/useFirestoreSync'
 
 interface WalletForm {
   btc: string
   usdt: string
 }
 
+interface WalletSettings {
+  btc: string
+  usdt: string
+}
+
 export default function CryptoWalletsPage() {
-  const { user, getToken } = useAdminAuth()
+  const { data: firestoreWallets, loading, error: listenerError } = useFirestoreListener<WalletSettings>('pageSettings', 'wallets')
+  const { sync, isSyncing, error: syncError } = useFirestoreSync('pageSettings')
+  
   const [form, setForm] = useState<WalletForm>({ btc: '', usdt: '' })
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
+  // Sync Firestore data to local state
   useEffect(() => {
-    async function loadWallets() {
-      try {
-        const token = await getToken()
-        const res = await fetch('/api/admin/wallets', {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (res.ok) {
-          const data = await res.json()
-          setForm({
-            btc: data.btc?.address || '',
-            usdt: data.usdt?.address || '',
-          })
-        }
-      } catch (err) {
-        console.error('Failed to load wallets:', err)
-        setMessage({ type: 'error', text: 'Failed to load wallet addresses' })
-      } finally {
-        setLoading(false)
-      }
+    if (firestoreWallets) {
+      console.log('[v0] Syncing Firestore wallets to state:', firestoreWallets)
+      setForm({
+        btc: firestoreWallets.btc || '',
+        usdt: firestoreWallets.usdt || '',
+      })
     }
-    loadWallets()
-  }, [getToken])
+  }, [firestoreWallets])
 
   const handleSave = async () => {
-    setSaving(true)
     try {
-      const token = await getToken()
-      const res = await fetch('/api/admin/wallets', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(form),
-      })
-
-      if (res.ok) {
-        setMessage({ type: 'success', text: 'Wallet addresses updated successfully' })
-        setTimeout(() => setMessage(null), 3000)
-      } else {
-        const err = await res.json()
-        setMessage({ type: 'error', text: err.error || 'Failed to save wallet addresses' })
-      }
-    } catch (err) {
-      setMessage({ type: 'error', text: 'An error occurred while saving' })
-    } finally {
-      setSaving(false)
+      console.log('[v0] Saving wallet addresses:', form)
+      await sync('wallets', form)
+      setMessage({ type: 'success', text: 'Wallet addresses updated successfully and synced to Firestore' })
+      setTimeout(() => setMessage(null), 3000)
+    } catch (err: any) {
+      console.error('[v0] Save failed:', err)
+      setMessage({ type: 'error', text: err.message || 'Failed to save wallet addresses' })
     }
   }
 
@@ -76,8 +54,11 @@ export default function CryptoWalletsPage() {
       </div>
 
       {loading ? (
-        <div className="bg-white/3 border border-white/5 rounded-2xl p-8 animate-pulse">
-          <div className="h-32 bg-white/5 rounded-lg" />
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <Loader2 size={32} className="text-red-500 animate-spin mx-auto mb-3" />
+            <p className="text-gray-400 text-sm">Loading wallet addresses...</p>
+          </div>
         </div>
       ) : (
         <div className="max-w-2xl">
@@ -150,29 +131,42 @@ export default function CryptoWalletsPage() {
             </div>
 
             {/* Message */}
-            {message && (
+            {(message || syncError || listenerError) && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg ${
-                  message.type === 'success'
+                  message?.type === 'success' || (!message && !syncError && !listenerError)
                     ? 'bg-green-900/20 border border-green-800/50 text-green-300'
                     : 'bg-red-900/20 border border-red-800/50 text-red-300'
                 }`}
               >
-                {message.type === 'success' ? <Check size={18} /> : <AlertCircle size={18} />}
-                <span>{message.text}</span>
+                {message?.type === 'success' ? (
+                  <Check size={18} />
+                ) : (
+                  <AlertCircle size={18} />
+                )}
+                <span>{message?.text || syncError || listenerError}</span>
               </motion.div>
             )}
 
             {/* Save Button */}
             <button
               onClick={handleSave}
-              disabled={saving}
+              disabled={isSyncing}
               className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              <Save size={18} />
-              {saving ? 'Saving...' : 'Save Wallet Addresses'}
+              {isSyncing ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save size={18} />
+                  Save Wallet Addresses
+                </>
+              )}
             </button>
           </motion.div>
         </div>
