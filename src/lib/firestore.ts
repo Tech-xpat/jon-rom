@@ -400,4 +400,4 @@ export async function updatePageContent(section: string, data: Partial<PageConte
       updatedBy,
     })
   }
-    }}
+    }
