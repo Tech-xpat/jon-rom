@@ -447,8 +447,8 @@ export default function FanCardPage() {
           } catch { setPageState('apply') }
         }
         checkStatus()
-      }
-          } else {
+                              }
+      } else {
       // Not signed in
       setPageState(pageState === 'submitted' ? 'submitted' : 'apply')
     }
@@ -738,6 +738,5 @@ export default function FanCardPage() {
       <Footer variant="main" />
     </div>
   )
-                                            }
-                
-    
+                                       }
+                    
