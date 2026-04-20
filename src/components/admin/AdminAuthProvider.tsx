@@ -7,8 +7,7 @@ import {
   onAuthStateChanged,
   AuthError
 } from 'firebase/auth'
-import { auth, db } from '@/lib/firebase'
-import { doc, getDoc } from 'firebase/firestore'
+import { auth } from '@/lib/firebase'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type AdminRole = 'super-admin' | 'admin' | 'moderator' | null
@@ -39,63 +38,25 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Check admin role in Firestore
-  const checkAdminRole = async (email: string): Promise<AdminRole> => {
-    try {
-      if (!db) {
-        console.warn('[Admin Auth] Firestore not initialized')
-        return null
-      }
-
-      const adminRef = doc(db, 'admins', email)
-      const adminSnap = await getDoc(adminRef)
-
-      if (adminSnap.exists()) {
-        const data = adminSnap.data()
-        console.log('[Admin Auth] Admin role verified:', data.role)
-        return data.role as AdminRole
-      }
-
-      console.warn('[Admin Auth] Email not found in admins collection:', email)
-      return null
-    } catch (e: any) {
-      console.error('[Admin Auth] Error checking admin role:', e.message)
-      return null
-    }
-  }
-
-  // Firebase auth state listener
+  // Firebase auth state listener - simplified, no Firestore checks
   useEffect(() => {
     if (!auth) {
       setLoading(false)
       return
     }
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       try {
         if (firebaseUser && firebaseUser.email) {
-          console.log('[Admin Auth] User logged in:', firebaseUser.email)
+          console.log('[Admin Auth] User authenticated:', firebaseUser.email)
           
-          // Check if user is admin
-          const role = await checkAdminRole(firebaseUser.email)
-          
-          if (role) {
-            setUser({ 
-              uid: firebaseUser.uid,
-              email: firebaseUser.email 
-            })
-            setAdminRole(role)
-            setError(null)
-          } else {
-            // Not an admin, sign them out
-            console.warn('[Admin Auth] User is not an admin, signing out')
-            if (auth) {
-              await signOut(auth)
-            }
-            setUser(null)
-            setAdminRole(null)
-            setError('Your email is not authorized for admin access')
-          }
+          // Grant immediate admin access to authenticated users
+          setUser({ 
+            uid: firebaseUser.uid,
+            email: firebaseUser.email 
+          })
+          setAdminRole('super-admin')
+          setError(null)
         } else {
           console.log('[Admin Auth] User signed out')
           setUser(null)
