@@ -208,14 +208,23 @@ export default function AdminManagementPage() {
     }
   }
 
+  export default function AdminsPage() {
+
   const getRolePill = (role: string) => {
-  const map: Record<string, string> = {
-    'super-admin': 'bg-red-900/30 text-red-400 border-red-800/40',
-    'admin': 'bg-blue-900/30 text-blue-400 border-blue-800/40',
-    'moderator': 'bg-green-900/30 text-green-400 border-green-800/40',
+    const map: Record<string, string> = {
+      'super-admin': 'bg-red-900/30 text-red-400 border-red-800/40',
+      'admin': 'bg-blue-900/30 text-blue-400 border-blue-800/40',
+      'moderator': 'bg-green-900/30 text-green-400 border-green-800/40',
+    }
+    return map[role] || 'bg-gray-900/30 text-gray-400 border-gray-800/40'
   }
-  return map[role] || 'bg-gray-900/30 text-gray-400 border-gray-800/40'
-}  // ✅ CLOSE FUNCTION
+
+  return (
+    <div className="max-w-2xl space-y-8">
+      {/* your JSX */}
+    </div>
+  )
+  }
 
 return (
   <div className="max-w-2xl space-y-8">
