@@ -156,7 +156,9 @@ export interface User {
 // Payment type
 export interface Payment {
   id: string
-  userId: string
+  userId?: string      // linked after Google sign-in; absent for pre-auth submissions
+  email?: string       // always present - used to whitelist after admin confirms
+  name?: string        // fan name for card engraving
   amount: number
   currency: 'USDT' | 'BTC' | 'PayPal' | 'Stripe'
   status: 'pending' | 'confirmed' | 'failed'

@@ -7,7 +7,9 @@ import { useAdminAuth } from '@/components/admin/AdminAuthProvider'
 
 interface Payment {
   id: string
-  userId: string
+  userId?: string
+  email?: string
+  name?: string
   amount: number
   currency: 'USDT' | 'BTC' | 'PayPal' | 'Stripe'
   status: 'pending' | 'confirmed' | 'failed'
@@ -130,11 +132,10 @@ export default function PaymentsPage() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`mb-4 flex items-center gap-3 px-4 py-3 rounded-lg ${
-            message.type === 'success'
+          className={`mb-4 flex items-center gap-3 px-4 py-3 rounded-lg ${message.type === 'success'
               ? 'bg-green-900/20 border border-green-800/50 text-green-300'
               : 'bg-red-900/20 border border-red-800/50 text-red-300'
-          }`}
+            }`}
         >
           {message.type === 'success' ? <Check size={18} /> : <X size={18} />}
           <span>{message.text}</span>
@@ -147,11 +148,10 @@ export default function PaymentsPage() {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors ${
-              filter === f
+            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors ${filter === f
                 ? 'bg-red-600 text-white'
                 : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/5'
-            }`}
+              }`}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
           </button>
@@ -185,12 +185,18 @@ export default function PaymentsPage() {
                         <div className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center text-lg">
                           {getCurrencyIcon(payment.currency)}
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <p className="text-white font-semibold">{payment.amount} {payment.currency}</p>
                             {getStatusIcon(payment.status)}
                           </div>
-                          <p className="text-gray-500 text-xs">{new Date(payment.createdAt).toLocaleString()}</p>
+                          {payment.email && (
+                            <p className="text-gray-300 text-xs font-mono truncate">{payment.email}</p>
+                          )}
+                          {payment.name && (
+                            <p className="text-gray-500 text-xs">Card name: {payment.name}</p>
+                          )}
+                          <p className="text-gray-600 text-xs">{new Date(payment.createdAt).toLocaleString()}</p>
                         </div>
                       </div>
                       {payment.transactionId && (
@@ -200,13 +206,12 @@ export default function PaymentsPage() {
 
                     <div className="flex items-center gap-2">
                       <span
-                        className={`text-xs px-3 py-1 rounded-full font-semibold ${
-                          payment.status === 'confirmed'
+                        className={`text-xs px-3 py-1 rounded-full font-semibold ${payment.status === 'confirmed'
                             ? 'bg-green-900/30 text-green-400'
                             : payment.status === 'pending'
                               ? 'bg-yellow-900/30 text-yellow-400'
                               : 'bg-red-900/30 text-red-400'
-                        }`}
+                          }`}
                       >
                         {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
                       </span>
