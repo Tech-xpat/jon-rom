@@ -1,88 +1,84 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { adminAuth, verifyAdminRequest } from '@/lib/firebase-admin'
 import { auth } from '@/lib/firebase'
-import { signInWithEmailAndPassword, updatePassword } from 'firebase/auth'
+import { updatePassword, signInWithEmailAndPassword } from 'firebase/auth'
+
+export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   try {
-    // Verify admin authentication
-    if (!(await verifyAdminRequest(req))) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const { currentPassword, newPassword, email } = await req.json()
 
-    const { currentPassword, newPassword } = await req.json()
-
-    if (!currentPassword || !newPassword) {
+    if (!email || !currentPassword || !newPassword) {
       return NextResponse.json(
-        { error: 'Current password and new password are required' },
+        { error: 'Email, current password, and new password are required' },
         { status: 400 }
       )
     }
 
-    // Validate new password strength
-    if (newPassword.length < 8) {
+    if (newPassword.length < 6) {
       return NextResponse.json(
-        { error: 'New password must be at least 8 characters long' },
+        { error: 'New password must be at least 6 characters' },
         { status: 400 }
       )
     }
 
-    // Get current user from token
-    const authHeader = req.headers.get('Authorization') || ''
-    const token = authHeader.replace(/^Bearer\s+/i, '').trim()
-
-    if (!adminAuth) {
-      return NextResponse.json({ error: 'Admin auth not initialized' }, { status: 500 })
-    }
-
-    const decodedToken = await adminAuth.verifyIdToken(token)
-    const userEmail = decodedToken.email
-
-    if (!userEmail) {
-      return NextResponse.json({ error: 'User email not found in token' }, { status: 400 })
-    }
-
-    // Import auth dynamically to avoid initialization issues
-    const { auth } = await import('@/lib/firebase')
     if (!auth) {
-      return NextResponse.json({ error: 'Firebase auth not initialized' }, { status: 500 })
-    }
-
-    // Verify current password by attempting to sign in
-    try {
-      await signInWithEmailAndPassword(auth, userEmail, currentPassword)
-    } catch (error: any) {
-      console.error('Current password verification failed:', error.message)
       return NextResponse.json(
-        { error: 'Current password is incorrect' },
-        { status: 400 }
-      )
-    }
-
-    // Get the current user after verification
-    const currentUser = auth.currentUser
-    if (!currentUser) {
-      return NextResponse.json({ error: 'User session not found' }, { status: 400 })
-    }
-
-    // Update password
-    try {
-      await updatePassword(currentUser, newPassword)
-      console.log(`Password updated successfully for admin: ${userEmail}`)
-    } catch (error: any) {
-      console.error('Password update failed:', error.message)
-      return NextResponse.json(
-        { error: 'Failed to update password. Please try again.' },
+        { error: 'Firebase not initialized' },
         { status: 500 }
       )
     }
 
-    return NextResponse.json({ success: true, message: 'Password updated successfully' })
+    console.log('[password-change] Password change attempt for:', email)
 
-  } catch (error: any) {
-    console.error('Password change API error:', error.message)
+    // Re-authenticate user with current password
+    try {
+      console.log('[password-change] Re-authenticating user...')
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        currentPassword
+      )
+
+      if (!userCredential.user) {
+        return NextResponse.json(
+          { error: 'Failed to verify current password' },
+          { status: 401 }
+        )
+      }
+
+      // Update password
+      console.log('[password-change] Updating password...')
+      await updatePassword(userCredential.user, newPassword)
+
+      console.log('[password-change] Password updated successfully')
+      return NextResponse.json({
+        success: true,
+        message: 'Password changed successfully'
+      })
+    } catch (authError: any) {
+      console.error('[password-change] Auth error:', authError.code)
+      if (authError.code === 'auth/wrong-password') {
+        return NextResponse.json(
+          { error: 'Current password is incorrect' },
+          { status: 401 }
+        )
+      }
+      if (authError.code === 'auth/user-not-found') {
+        return NextResponse.json(
+          { error: 'User not found' },
+          { status: 404 }
+        )
+      }
+      return NextResponse.json(
+        { error: 'Authentication failed' },
+        { status: 401 }
+      )
+    }
+  } catch (e: any) {
+    console.error('[password-change] Error:', e.message)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: e.message || 'Failed to change password' },
       { status: 500 }
     )
   }
