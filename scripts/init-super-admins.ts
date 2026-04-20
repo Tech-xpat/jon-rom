@@ -1,4 +1,4 @@
-import * as admin from 'firebase-admin'
+import admin from 'firebase-admin'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -13,8 +13,10 @@ if (!fs.existsSync(serviceAccountPath)) {
 
 const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'))
 
+// Initialize with the correct credential method
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+  credential: admin.credential.cert(serviceAccount as any),
+  projectId: serviceAccount.project_id,
 })
 
 const auth = admin.auth()
