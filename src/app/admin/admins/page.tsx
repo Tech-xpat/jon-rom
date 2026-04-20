@@ -148,6 +148,10 @@ export default function AdminManagementPage() {
     }
   }
 
+  useEffect(() => {
+    loadAdmins()
+  }, [])
+
   return (
     <div>
       <div className="mb-8">

@@ -22,13 +22,14 @@ interface AdminAuthCtx {
   logout: () => Promise<void>
   clearError: () => void
   getToken: () => Promise<string | null>
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>
   isAdmin: boolean
 }
 
 const Ctx = createContext<AdminAuthCtx>({
   user: null, adminRole: null, loading: false, error: null,
   login: async () => {}, logout: async () => {}, clearError: () => {},
-  getToken: async () => null, isAdmin: false,
+  getToken: async () => null, changePassword: async () => {}, isAdmin: false,
 })
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
@@ -166,11 +167,46 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     return null
   }
 
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    setError(null)
+    try {
+      if (!user?.email) {
+        throw new Error('User not authenticated')
+      }
+
+      console.log('[Admin Auth] Changing password for:', user.email)
+      
+      const response = await fetch('/api/admin/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: user.email,
+          currentPassword,
+          newPassword,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to change password')
+      }
+
+      console.log('[Admin Auth] Password changed successfully')
+      setError(null)
+    } catch (e: any) {
+      const errorMsg = e.message || 'Failed to change password'
+      console.error('[Admin Auth] Password change error:', errorMsg)
+      setError(errorMsg)
+      throw e
+    }
+  }
+
   return (
     <Ctx.Provider value={{
       user, adminRole, loading, error,
       login, logout, clearError: () => setError(null),
-      getToken, isAdmin: adminRole !== null,
+      getToken, changePassword, isAdmin: adminRole !== null,
     }}>
       {children}
     </Ctx.Provider>

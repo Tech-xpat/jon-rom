@@ -64,11 +64,11 @@ export default function AdminSidebar() {
       </nav>
 
       {/* User */}
-      <div className="p-3 sm:p-4 border-t border-white/5">
+      <div className="p-3 sm:p-4 border-t border-white/5 space-y-3">
         {user && (
-          <div className="mb-3 px-3 hidden sm:block">
-            <p className="text-white text-xs font-medium truncate">{user.displayName}</p>
-            <p className="text-jcvd-gray text-[10px] truncate">{user.email}</p>
+          <div className="px-3 hidden sm:block">
+            <p className="text-white text-xs font-medium truncate">{user.email}</p>
+            <p className="text-jcvd-gray text-[10px] mt-1">Admin Account</p>
           </div>
         )}
         <button
