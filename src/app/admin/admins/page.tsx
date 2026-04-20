@@ -215,7 +215,7 @@ export default function AdminManagementPage() {
       'moderator': 'bg-green-900/30 text-green-400 border-green-800/40',
     }
     return map[role] || 'bg-gray-900/30 text-gray-400 border-gray-800/40'
-  }
+  
 
   return (
     <div className="max-w-2xl space-y-8">
