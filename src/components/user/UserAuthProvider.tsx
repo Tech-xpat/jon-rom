@@ -98,8 +98,8 @@ export function UserAuthProvider({ children }: { children: ReactNode }) {
         setWhitelisted(userData.whitelisted)
         setFanStatus(userData.fanStatus)
 
-        // 🔥 redirect to fan-card — that's where the download lives
-        router.push('/fan-card')
+        // 🔥 redirect to dashboard — shows status, transactions, and card access
+        router.push('/dashboard')
 
       } catch (err) {
         console.error('[Auth Flow Error]', err)
