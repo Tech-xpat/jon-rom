@@ -6,6 +6,7 @@ import YouTubeClips from '@/components/sections/home/YouTubeClips'
 import LatestNews from '@/components/sections/home/LatestNews'
 import Gallery from '@/components/sections/home/Gallery'
 import SocialSection from '@/components/sections/home/SocialSection'
+import Link from 'next/link'
 
 export default function HomePage() {
   return (
@@ -14,6 +15,25 @@ export default function HomePage() {
       <main className="pt-0">
         <HeroSlider />
         <WelcomeBanner />
+        
+        {/* Fan Card Application CTA */}
+        <section className="py-16 px-4 bg-gradient-to-b from-transparent to-red-900/10">
+          <div className="max-w-2xl mx-auto text-center">
+            <h2 className="text-white text-3xl md:text-4xl font-black mb-4 tracking-widest">
+              GET YOUR FAN CARD
+            </h2>
+            <p className="text-gray-400 mb-8 max-w-sm mx-auto">
+              Own an official Jonathan Roumie Fan Card. Apply now and complete your membership.
+            </p>
+            <Link
+              href="/fan-card"
+              className="inline-block bg-jcvd-red hover:bg-red-700 text-white px-8 py-4 rounded-xl font-bold tracking-widest transition-colors"
+            >
+              APPLY FOR CARD
+            </Link>
+          </div>
+        </section>
+
         <YouTubeClips />
         <LatestNews />
         <Gallery />

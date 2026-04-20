@@ -170,7 +170,7 @@ function FanCard3D({
   )
 }
 
-// ─── Stripe Payment Modal ──────────────────────────────────────────────────────
+// ─── Crypto Payment Modal ──────────────────────────────────────────────────────
 
 function PaymentModal({
   onClose,
@@ -181,31 +181,6 @@ function PaymentModal({
   onSuccess: () => void
   price: number
 }) {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-
-  const handleCheckout = async () => {
-    setLoading(true)
-    setError('')
-    try {
-      const res = await fetch('/api/stripe/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ product: 'fan-card' }),
-      })
-      const data = await res.json()
-      if (data.url) {
-        window.location.href = data.url
-      } else {
-        setError('Failed to start checkout. Please try again.')
-      }
-    } catch {
-      setError('Network error. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -226,18 +201,18 @@ function PaymentModal({
             <Lock size={20} className="text-jcvd-red" />
           </div>
           <div>
-            <h3 className="text-white font-bold tracking-widest">UNLOCK YOUR CARD</h3>
-            <p className="text-jcvd-gray text-xs tracking-wide">One-time purchase</p>
+            <h3 className="text-white font-bold tracking-widest">CRYPTO PAYMENT</h3>
+            <p className="text-jcvd-gray text-xs tracking-wide">Complete your application</p>
           </div>
         </div>
 
         <div className="bg-white/5 rounded-xl p-4 mb-6">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-jcvd-gray text-sm">Jonathan Roumie Fan Card PDF</span>
+            <span className="text-jcvd-gray text-sm">Jonathan Roumie Fan Card</span>
             <span className="text-white font-bold">${(price / 100).toFixed(2)}</span>
           </div>
           <ul className="space-y-1">
-            {['High-res PDF download', 'Personalized with your name', 'Official Jonathan Roumie design', 'Lifetime access'].map((f) => (
+            {['Crypto payment required', 'Personalized with your name', 'Admin verification needed', 'Lifetime access'].map((f) => (
               <li key={f} className="flex items-center gap-2 text-xs text-jcvd-gray">
                 <CheckCircle size={12} className="text-jcvd-teal" />
                 {f}
@@ -246,19 +221,23 @@ function PaymentModal({
           </ul>
         </div>
 
-        {error && <p className="text-jcvd-red text-sm mb-4 text-center">{error}</p>}
-
-        <button
-          onClick={handleCheckout}
-          disabled={loading}
-          className="w-full bg-jcvd-red text-white py-3 rounded-xl font-bold tracking-widest hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+        <a
+          href="/checkout"
+          className="block w-full bg-jcvd-red text-white py-3 rounded-xl font-bold tracking-widest hover:bg-red-700 transition-colors flex items-center justify-center gap-2 text-center"
         >
           <CreditCard size={18} />
-          {loading ? 'REDIRECTING...' : 'PAY & DOWNLOAD'}
+          PROCEED TO CRYPTO PAYMENT
+        </a>
+
+        <button
+          onClick={onClose}
+          className="w-full text-jcvd-gray hover:text-white py-2 mt-3 text-sm transition-colors"
+        >
+          Cancel
         </button>
 
         <p className="text-center text-jcvd-gray text-xs mt-4">
-          Powered by Stripe. Secure & encrypted.
+          Secure cryptocurrency payment gateway
         </p>
       </motion.div>
     </motion.div>
@@ -365,7 +344,7 @@ export default function FanCardPage({
           <div className="mt-6 space-y-3">
             <button
               onClick={handleExport}
-              disabled={exporting}
+              disabled={exporting || !paid}
               className="w-full bg-jcvd-red text-white py-4 rounded-xl font-bold tracking-[0.3em] hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-3"
             >
               {paid ? (
@@ -375,8 +354,8 @@ export default function FanCardPage({
                 </>
               ) : (
                 <>
-                  <Lock size={20} />
-                  UNLOCK & DOWNLOAD — ${(fanCardPrice / 100).toFixed(2)}
+                  <CreditCard size={20} />
+                  APPLY & PAY WITH CRYPTO — ${(fanCardPrice / 100).toFixed(2)}
                 </>
               )}
             </button>

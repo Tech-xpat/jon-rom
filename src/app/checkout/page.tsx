@@ -116,8 +116,8 @@ export default function CheckoutPage() {
       <main className="pt-24 pb-16 px-4">
         <div className="max-w-2xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-12">
-            <h1 className="text-white text-3xl font-black tracking-widest mb-2">CHECKOUT</h1>
-            <p className="text-gray-400">Jonathan Roumie Fan Card - ${fanCardPrice.toFixed(2)}</p>
+            <h1 className="text-white text-3xl font-black tracking-widest mb-2">APPLY FOR FAN CARD</h1>
+            <p className="text-gray-400">Complete your application with crypto payment</p>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-8">
