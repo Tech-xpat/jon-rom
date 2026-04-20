@@ -227,14 +227,17 @@ function ApplicationForm({
   wallets,
   price,
   onSuccess,
+  name,
+  onNameChange,
 }: {
   wallets: Wallets
   price: number
   onSuccess: (email: string) => void
+  name: string
+  onNameChange: (n: string) => void
 }) {
   const hasBtc = !!wallets.btc?.address
   const hasUsdt = !!wallets.usdt?.address
-  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [method, setMethod] = useState<PayMethod>(hasUsdt ? 'USDT' : 'BTC')
   const [submitting, setSubmitting] = useState(false)
@@ -332,7 +335,7 @@ function ApplicationForm({
         <input
           type="text"
           value={name}
-          onChange={(e) => setName(e.target.value.slice(0, 30))}
+          onChange={(e) => onNameChange(e.target.value.slice(0, 30))}
           placeholder="Your Full Name"
           className="w-full bg-white/5 border border-white/10 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-jcvd-red transition-colors placeholder:text-white/20 text-lg tracking-widest text-center"
         />
@@ -444,8 +447,8 @@ export default function FanCardPage() {
           } catch { setPageState('apply') }
         }
         checkStatus()
-      }
-    } else {
+              }
+      } else {
       // Not signed in
       setPageState(pageState === 'submitted' ? 'submitted' : 'apply')
     }
@@ -536,7 +539,7 @@ export default function FanCardPage() {
                   </div>
                 ) : (
                   <div className="bg-[#0d0d0d] border border-white/8 rounded-2xl p-6">
-                    <ApplicationForm wallets={wallets} price={price} onSuccess={handlePaymentSuccess} />
+                    <ApplicationForm wallets={wallets} price={price} onSuccess={handlePaymentSuccess} name={cardName} onNameChange={setCardName} />
                   </div>
                 )}
 
@@ -742,4 +745,5 @@ export default function FanCardPage() {
       <Footer variant="main" />
     </div>
   )
-}
+              }
+        
