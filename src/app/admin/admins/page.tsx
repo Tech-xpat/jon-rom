@@ -208,8 +208,6 @@ export default function AdminManagementPage() {
     }
   }
 
-  export default function AdminsPage() {
-
   const getRolePill = (role: string) => {
     const map: Record<string, string> = {
       'super-admin': 'bg-red-900/30 text-red-400 border-red-800/40',
@@ -221,13 +219,6 @@ export default function AdminManagementPage() {
 
   return (
     <div className="max-w-2xl space-y-8">
-      {/* your JSX */}
-    </div>
-  )
-  }
-
-return (
-  <div className="max-w-2xl space-y-8">
 
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
@@ -457,4 +448,4 @@ return (
                       type={showCurrent ? 'text' : 'password'}
                       value={currentPw}
                       onChange={(e) => setCurrentPw(e.target.value)}
-                      plac
+                      
