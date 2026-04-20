@@ -447,17 +447,25 @@ export default function FanCardPage() {
           } catch { setPageState('apply') }
         }
         checkStatus()
-              }
-      } else {
+      }
+          } else {
       // Not signed in
       setPageState(pageState === 'submitted' ? 'submitted' : 'apply')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading, whitelisted])
 
-  const handlePaymentSuccess = (email: string) => {
+  const handlePaymentSuccess = async (email: string) => {
     setSubmittedEmail(email)
     setPageState('submitted')
+    // Auto-trigger Google sign-in after a short delay so user can see the success message
+    setTimeout(async () => {
+      try {
+        await login()
+      } catch {
+        // Silent — user can manually sign in from the submitted state UI
+      }
+    }, 2200)
   }
 
   const handleGoogleSignIn = async () => {
@@ -558,55 +566,40 @@ export default function FanCardPage() {
               </motion.div>
             )}
 
-            {/* ── Submitted: payment recorded, prompt Google sign-in ── */}
+            {/* ── Submitted: payment recorded, auto-triggers Google sign-in ── */}
             {pageState === 'submitted' && (
               <motion.div key="submitted" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-                className="space-y-5"
+                className="space-y-4"
               >
-                {/* Success banner */}
-                <div className="bg-green-950/40 border border-green-800/50 rounded-2xl p-6 text-center">
-                  <div className="w-14 h-14 bg-green-900/40 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle size={28} className="text-green-400" />
+                {/* Success + auto-redirect */}
+                <div className="bg-green-950/40 border border-green-800/50 rounded-2xl p-7 text-center">
+                  <div className="w-16 h-16 bg-green-900/40 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle size={30} className="text-green-400" />
                   </div>
-                  <h2 className="text-white text-xl font-black tracking-wide mb-2">Payment Submitted!</h2>
-                  <p className="text-green-300/80 text-sm leading-relaxed">
-                    Your payment has been recorded for <span className="font-semibold text-green-300">{submittedEmail}</span>.
-                    Admin will verify it and whitelist you within 24 hours.
+                  <h2 className="text-white text-xl font-black tracking-wide mb-2">Payment Recorded!</h2>
+                  <p className="text-green-300/80 text-sm leading-relaxed mb-4">
+                    Deposit submitted for <span className="font-semibold text-green-300">{submittedEmail}</span>.
                   </p>
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 size={16} className="animate-spin text-white" />
+                    <span className="text-white font-semibold text-sm">Opening Google sign-in&hellip;</span>
+                  </div>
+                  <p className="text-gray-600 text-xs mt-2">You&apos;ll be taken to your dashboard automatically.</p>
                 </div>
 
-                {/* What happens next */}
-                <div className="bg-white/3 border border-white/8 rounded-2xl p-5 space-y-4">
-                  <p className="text-white font-semibold text-sm tracking-widest">WHAT HAPPENS NEXT</p>
-                  {[
-                    { step: '1', text: 'Admin verifies your crypto payment on-chain', done: false },
-                    { step: '2', text: 'Your email is whitelisted as an official fan', done: false },
-                    { step: '3', text: 'Sign in with Google using this email to download your card', done: false },
-                  ].map(({ step, text }) => (
-                    <div key={step} className="flex items-start gap-3">
-                      <span className="w-6 h-6 rounded-full bg-jcvd-red/20 border border-jcvd-red/40 text-jcvd-red text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
-                        {step}
-                      </span>
-                      <p className="text-gray-300 text-sm leading-relaxed">{text}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Google sign-in CTA */}
-                <div className="bg-[#0d0d0d] border border-white/8 rounded-2xl p-6 text-center space-y-4">
-                  <p className="text-gray-400 text-sm">
-                    Already confirmed? Sign in with Google to check your whitelist status and download your card.
-                  </p>
+                {/* Manual fallback */}
+                <div className="bg-white/3 border border-white/8 rounded-2xl p-5 text-center space-y-3">
+                  <p className="text-gray-400 text-sm">Sign-in window not opening?</p>
                   <button
                     onClick={handleGoogleSignIn}
                     disabled={loginLoading}
-                    className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-100 text-black font-semibold py-3.5 rounded-xl transition-colors disabled:opacity-60"
+                    className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-100 text-black font-semibold py-3.5 rounded-xl transition-colors disabled:opacity-60 text-sm"
                   >
                     {loginLoading ? (
-                      <Loader2 size={20} className="animate-spin" />
+                      <Loader2 size={18} className="animate-spin text-gray-600" />
                     ) : (
                       <>
-                        <svg width="20" height="20" viewBox="0 0 24 24">
+                        <svg width="18" height="18" viewBox="0 0 24 24">
                           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                           <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
@@ -617,7 +610,7 @@ export default function FanCardPage() {
                     )}
                   </button>
                   <p className="text-gray-600 text-xs">
-                    Make sure to sign in with <span className="text-gray-400 font-mono">{submittedEmail}</span>
+                    Use <span className="text-gray-400 font-mono">{submittedEmail}</span>
                   </p>
                 </div>
               </motion.div>
@@ -745,5 +738,6 @@ export default function FanCardPage() {
       <Footer variant="main" />
     </div>
   )
-              }
-        
+                                            }
+                
+    
