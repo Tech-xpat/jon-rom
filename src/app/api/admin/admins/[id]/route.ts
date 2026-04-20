@@ -13,15 +13,19 @@ export async function PUT(
   }
 
   try {
-    const { role } = await req.json()
+    const body = await req.json()
     const adminId = params.id
+    const updates: Record<string, any> = {}
 
-    if (!role) {
-      return NextResponse.json({ error: 'Role is required' }, { status: 400 })
+    if (body.role) updates.role = body.role
+    if (body.email) updates.email = body.email.trim().toLowerCase()
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
     }
 
-    const updatedAdmin = await updateAdmin(adminId, { role })
-    return NextResponse.json(updatedAdmin)
+    await updateAdmin(adminId, updates)
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Failed to update admin:', error)
     return NextResponse.json({ error: 'Failed to update admin' }, { status: 500 })
