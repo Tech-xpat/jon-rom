@@ -1,60 +1,107 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Bitcoin, Save, AlertCircle, Check, Loader2 } from 'lucide-react'
-import { useFirestoreListener } from '@/hooks/useFirestoreListener'
-import { useFirestoreSync } from '@/hooks/useFirestoreSync'
+import { Bitcoin, Save, AlertCircle, Check, Loader2, RefreshCw } from 'lucide-react'
+import { useAdminAuth } from '@/components/admin/AdminAuthProvider'
 
 interface WalletForm {
   btc: string
   usdt: string
 }
 
-interface WalletSettings {
-  btc: string
-  usdt: string
-}
-
 export default function CryptoWalletsPage() {
-  const { data: firestoreWallets, loading, error: listenerError } = useFirestoreListener<WalletSettings>('pageSettings', 'wallets')
-  const { sync, isSyncing, error: syncError } = useFirestoreSync('pageSettings')
-  
+  const { getToken } = useAdminAuth()
   const [form, setForm] = useState<WalletForm>({ btc: '', usdt: '' })
+  const [loading, setLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  // Sync Firestore data to local state
-  useEffect(() => {
-    if (firestoreWallets) {
-      console.log('[v0] Syncing Firestore wallets to state:', firestoreWallets)
-      setForm({
-        btc: firestoreWallets.btc || '',
-        usdt: firestoreWallets.usdt || '',
+  const loadWallets = useCallback(async () => {
+    setLoading(true)
+    try {
+      const token = await getToken()
+      const res = await fetch('/api/admin/wallets', {
+        headers: { Authorization: `Bearer ${token}` },
       })
+      if (!res.ok) throw new Error('Failed to load wallets')
+      const data = await res.json()
+      setForm({
+        btc: data.btc?.address || '',
+        usdt: data.usdt?.address || '',
+      })
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message || 'Failed to load wallet addresses' })
+    } finally {
+      setLoading(false)
     }
-  }, [firestoreWallets])
+  }, [getToken])
+
+  useEffect(() => {
+    loadWallets()
+  }, [loadWallets])
 
   const handleSave = async () => {
+    setIsSaving(true)
+    setMessage(null)
     try {
-      console.log('[v0] Saving wallet addresses:', form)
-      await sync('wallets', form)
-      setMessage({ type: 'success', text: 'Wallet addresses updated successfully and synced to Firestore' })
-      setTimeout(() => setMessage(null), 3000)
+      const token = await getToken()
+
+      const saves: Promise<Response>[] = []
+      if (form.btc.trim()) {
+        saves.push(
+          fetch('/api/admin/wallets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ type: 'BTC', address: form.btc.trim() }),
+          })
+        )
+      }
+      if (form.usdt.trim()) {
+        saves.push(
+          fetch('/api/admin/wallets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ type: 'USDT', address: form.usdt.trim() }),
+          })
+        )
+      }
+
+      const results = await Promise.all(saves)
+      const failed = results.find((r) => !r.ok)
+      if (failed) {
+        const err = await failed.json()
+        throw new Error(err.error || 'Failed to save one or more wallet addresses')
+      }
+
+      setMessage({ type: 'success', text: 'Wallet addresses saved — fans will now see these on the payment page.' })
+      setTimeout(() => setMessage(null), 5000)
     } catch (err: any) {
-      console.error('[v0] Save failed:', err)
       setMessage({ type: 'error', text: err.message || 'Failed to save wallet addresses' })
+    } finally {
+      setIsSaving(false)
     }
   }
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-white text-2xl font-black tracking-widest">CRYPTO WALLETS</h1>
-        <p className="text-gray-500 text-sm mt-1">Configure wallet addresses for cryptocurrency payments</p>
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="text-white text-2xl font-black tracking-widest">CRYPTO WALLETS</h1>
+          <p className="text-gray-500 text-sm mt-1">Addresses fans see when paying for their fan card</p>
+        </div>
+        <button
+          onClick={loadWallets}
+          disabled={loading}
+          className="flex items-center gap-2 text-gray-400 hover:text-white text-sm transition-colors disabled:opacity-40"
+        >
+          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+          Refresh
+        </button>
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center h-96">
+        <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <Loader2 size={32} className="text-red-500 animate-spin mx-auto mb-3" />
             <p className="text-gray-400 text-sm">Loading wallet addresses...</p>
@@ -74,7 +121,7 @@ export default function CryptoWalletsPage() {
                 Bitcoin (BTC) Wallet Address
               </label>
               <p className="text-gray-400 text-sm mb-4">
-                Enter your Bitcoin wallet address for customer payments. Customers will send BTC to this address.
+                Fans choosing BTC will be shown this address. Leave blank to hide BTC as an option.
               </p>
               <input
                 type="text"
@@ -84,25 +131,18 @@ export default function CryptoWalletsPage() {
                 className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:border-orange-500 transition-colors font-mono text-sm"
               />
               {form.btc && (
-                <div className="mt-2 text-xs text-gray-400">
-                  Length: {form.btc.length} characters
-                </div>
+                <p className="mt-2 text-xs text-gray-500">{form.btc.length} characters</p>
               )}
             </div>
 
             {/* USDT Wallet */}
             <div>
               <label className="flex items-center gap-2 text-white font-semibold mb-2">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-green-500">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-                  <text x="12" y="14" textAnchor="middle" fontSize="8" fill="currentColor" fontWeight="bold">
-                    U
-                  </text>
-                </svg>
-                Tether USDT Wallet Address
+                <span className="w-[18px] h-[18px] rounded-full bg-green-500/20 border border-green-500/50 flex items-center justify-center text-green-400 text-[10px] font-black">₮</span>
+                Tether USDT Wallet Address (ERC-20)
               </label>
               <p className="text-gray-400 text-sm mb-4">
-                Enter your Ethereum address to receive USDT payments. Use an ERC-20 compatible address.
+                Fans choosing USDT will send ERC-20 tokens here. Leave blank to hide USDT as an option.
               </p>
               <input
                 type="text"
@@ -112,51 +152,44 @@ export default function CryptoWalletsPage() {
                 className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:border-green-500 transition-colors font-mono text-sm"
               />
               {form.usdt && (
-                <div className="mt-2 text-xs text-gray-400">
-                  Length: {form.usdt.length} characters
-                </div>
+                <p className="mt-2 text-xs text-gray-500">{form.usdt.length} characters</p>
               )}
             </div>
 
-            {/* Info Box */}
+            {/* Info */}
             <div className="bg-blue-900/20 border border-blue-800/50 rounded-lg p-4 flex gap-3">
               <AlertCircle size={20} className="text-blue-400 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-blue-300">
-                <p className="font-semibold mb-1">Important:</p>
+                <p className="font-semibold mb-1">How it works:</p>
                 <p>
-                  Only Bitcoin and USDT are active. PayPal and Stripe payments are configured separately. 
-                  Test addresses thoroughly before going live.
+                  Once saved, these addresses appear on the fan card payment page in real time.
+                  After a fan submits their payment, confirm it under <strong>Payments</strong> to unlock their card download.
                 </p>
               </div>
             </div>
 
             {/* Message */}
-            {(message || syncError || listenerError) && (
+            {message && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg ${
-                  message?.type === 'success' || (!message && !syncError && !listenerError)
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg ${message.type === 'success'
                     ? 'bg-green-900/20 border border-green-800/50 text-green-300'
                     : 'bg-red-900/20 border border-red-800/50 text-red-300'
-                }`}
+                  }`}
               >
-                {message?.type === 'success' ? (
-                  <Check size={18} />
-                ) : (
-                  <AlertCircle size={18} />
-                )}
-                <span>{message?.text || syncError || listenerError}</span>
+                {message.type === 'success' ? <Check size={18} /> : <AlertCircle size={18} />}
+                <span>{message.text}</span>
               </motion.div>
             )}
 
             {/* Save Button */}
             <button
               onClick={handleSave}
-              disabled={isSyncing}
+              disabled={isSaving || (!form.btc.trim() && !form.usdt.trim())}
               className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {isSyncing ? (
+              {isSaving ? (
                 <>
                   <Loader2 size={18} className="animate-spin" />
                   Saving...
