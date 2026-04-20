@@ -9,7 +9,7 @@ import {
   onAuthChange,
 } from '@/lib/firebase'
 import { getIdToken, getUserMetadata, isUserAuthenticated } from '@/lib/firebase-auth-utils'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 
 interface UserAuthCtx {
   user: User | null
@@ -33,7 +33,12 @@ export function UserAuthProvider({ children }: { children: ReactNode }) {
   const [fanStatus, setFanStatus] = useState<'pending' | 'approved' | 'rejected' | null>(null)
 
   const router = useRouter()
+  const pathname = usePathname()
   const hasInitialized = useRef(false) // 🔥 prevents double execution
+
+  // 🚫 Admin routes are handled entirely by AdminAuthProvider.
+  // UserAuthProvider must NOT run auth logic or redirect on any /admin path.
+  const isAdminRoute = pathname?.startsWith('/admin')
 
   useEffect(() => {
     if (!auth) {
@@ -42,6 +47,13 @@ export function UserAuthProvider({ children }: { children: ReactNode }) {
     }
 
     const unsub = onAuthChange(async (u: User | null) => {
+      // 🚫 Skip ALL user auth logic when on admin routes.
+      // Admins are authenticated separately via AdminAuthProvider.
+      if (isAdminRoute) {
+        setLoading(false)
+        return
+      }
+
       setUser(u)
 
       if (!u) {
@@ -97,7 +109,7 @@ export function UserAuthProvider({ children }: { children: ReactNode }) {
     })
 
     return unsub
-  }, [])
+  }, [isAdminRoute])
 
   // 🔥 CLEAN LOGIN (no logic here)
   const login = async () => {
