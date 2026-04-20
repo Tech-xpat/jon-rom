@@ -84,12 +84,12 @@ export default function UsersPage() {
 
   const getPaymentBadge = (status: string) => {
     if (status === 'confirmed') {
-      return <span className="text-xs px-2 py-1 bg-green-900/30 text-green-400 rounded-full">Paid</span>
+      return <span className="text-xs px-2 py-1 bg-green-900/30 text-green-400 rounded-full font-semibold">✓ Paid</span>
     }
     if (status === 'pending') {
-      return <span className="text-xs px-2 py-1 bg-blue-900/30 text-blue-400 rounded-full">Pending</span>
+      return <span className="text-xs px-2 py-1 bg-yellow-900/30 text-yellow-400 rounded-full font-semibold">⏳ Deposit Pending</span>
     }
-    return <span className="text-xs px-2 py-1 bg-gray-900/30 text-gray-400 rounded-full">Unpaid</span>
+    return <span className="text-xs px-2 py-1 bg-gray-900/30 text-gray-500 rounded-full">Unpaid</span>
   }
 
   return (
@@ -199,12 +199,12 @@ export default function UsersPage() {
           <p className="text-green-400 text-xl sm:text-2xl font-black">{users.filter((u) => u.whitelisted).length}</p>
         </div>
         <div className="bg-white/3 border border-white/5 rounded-lg p-3 sm:p-4">
-          <p className="text-gray-400 text-xs tracking-widest mb-2">PENDING</p>
+          <p className="text-gray-400 text-xs tracking-widest mb-2">PENDING APPROVAL</p>
           <p className="text-yellow-400 text-xl sm:text-2xl font-black">{users.filter((u) => !u.whitelisted).length}</p>
         </div>
         <div className="bg-white/3 border border-white/5 rounded-lg p-3 sm:p-4">
-          <p className="text-gray-400 text-xs tracking-widest mb-2">PAID</p>
-          <p className="text-blue-400 text-xl sm:text-2xl font-black">{users.filter((u) => u.paymentStatus === 'confirmed').length}</p>
+          <p className="text-gray-400 text-xs tracking-widest mb-2">DEPOSITS PENDING</p>
+          <p className="text-orange-400 text-xl sm:text-2xl font-black">{users.filter((u) => u.paymentStatus === 'pending').length}</p>
         </div>
       </div>
     </div>
