@@ -448,4 +448,120 @@ export default function AdminManagementPage() {
                       type={showCurrent ? 'text' : 'password'}
                       value={currentPw}
                       onChange={(e) => setCurrentPw(e.target.value)}
-                      
+                      placeholder="••••••••"
+                      className="w-full bg-white/5 border border-white/10 text-white px-4 py-3 pr-11 rounded-xl focus:outline-none focus:border-red-500 transition-colors placeholder:text-white/15 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrent(!showCurrent)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                    >
+                      {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* New password */}
+                <div>
+                  <label className="text-gray-400 text-xs tracking-widests block mb-2">NEW PASSWORD</label>
+                  <div className="relative">
+                    <input
+                      type={showNew ? 'text' : 'password'}
+                      value={newPw}
+                      onChange={(e) => setNewPw(e.target.value)}
+                      placeholder="Minimum 6 characters"
+                      className="w-full bg-white/5 border border-white/10 text-white px-4 py-3 pr-11 rounded-xl focus:outline-none focus:border-red-500 transition-colors placeholder:text-white/15 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNew(!showNew)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                    >
+                      {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  {/* Strength indicator */}
+                  {newPw.length > 0 && (
+                    <div className="mt-2 flex gap-1">
+                      {[1, 2, 3, 4].map((i) => (
+                        <div
+                          key={i}
+                          className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                            newPw.length >= i * 3
+                              ? newPw.length >= 12 ? 'bg-green-500'
+                                : newPw.length >= 8 ? 'bg-yellow-500'
+                                : 'bg-red-500'
+                              : 'bg-white/10'
+                          }`}
+                        />
+                      ))}
+                      <span className="text-xs text-gray-500 ml-2">
+                        {newPw.length >= 12 ? 'Strong' : newPw.length >= 8 ? 'Medium' : 'Weak'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Confirm password */}
+                <div>
+                  <label className="text-gray-400 text-xs tracking-widests block mb-2">CONFIRM NEW PASSWORD</label>
+                  <input
+                    type="password"
+                    value={confirmPw}
+                    onChange={(e) => setConfirmPw(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handlePasswordChange()}
+                    placeholder="Re-enter new password"
+                    className={`w-full bg-white/5 border text-white px-4 py-3 rounded-xl focus:outline-none transition-colors placeholder:text-white/15 text-sm ${
+                      confirmPw && confirmPw !== newPw
+                        ? 'border-red-500/60 focus:border-red-500'
+                        : confirmPw && confirmPw === newPw
+                          ? 'border-green-500/60 focus:border-green-500'
+                          : 'border-white/10 focus:border-red-500'
+                    }`}
+                  />
+                  {confirmPw && confirmPw !== newPw && (
+                    <p className="text-red-400 text-xs mt-1">Passwords do not match</p>
+                  )}
+                </div>
+
+                <button
+                  onClick={handlePasswordChange}
+                  disabled={pwSaving || !currentPw || !newPw || !confirmPw}
+                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-40 text-white px-6 py-3 rounded-xl text-sm font-bold tracking-wide transition-colors"
+                >
+                  {pwSaving ? (
+                    <><Loader2 size={15} className="animate-spin" />Updating…</>
+                  ) : (
+                    <><KeyRound size={15} />Update Password</>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* ── Permission Reference ── */}
+      <div className="bg-white/3 border border-white/8 rounded-2xl p-6">
+        <h2 className="text-white font-black text-sm tracking-widests mb-4">PERMISSION LEVELS</h2>
+        <div className="space-y-3">
+          {[
+            { color: 'bg-red-400', label: 'Super Admin', desc: 'Full access — manages other admins, system settings, all data' },
+            { color: 'bg-blue-400', label: 'Admin', desc: 'Manages content, users, orders, payments, fan cards' },
+            { color: 'bg-green-400', label: 'Moderator', desc: 'Limited to user management and content moderation' },
+          ].map(({ color, label, desc }) => (
+            <div key={label} className="flex items-start gap-3">
+              <div className={`w-2.5 h-2.5 ${color} rounded-full mt-1.5 flex-shrink-0`} />
+              <div>
+                <p className="text-white text-sm font-semibold">{label}</p>
+                <p className="text-gray-500 text-xs mt-0.5">{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+    </div>
+  )
+}
+
