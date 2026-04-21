@@ -47,43 +47,43 @@ export default function CardPersonalizePage() {
             {/* Card Preview */}
             <div className="order-2 lg:order-1">
               <motion.div
-                className="relative w-full max-w-sm mx-auto aspect-[2/3] rounded-2xl overflow-hidden bg-gradient-to-br from-blue-600 to-purple-700 p-8 flex flex-col justify-between shadow-2xl"
+                className="relative w-full max-w-sm mx-auto rounded-2xl overflow-hidden bg-white/5 border border-white/10 shadow-2xl space-y-4"
                 animate={{
                   boxShadow: cardName ? '0 20px 60px rgba(59, 130, 246, 0.5)' : '0 10px 30px rgba(0, 0, 0, 0.5)',
                 }}
               >
-                {/* Card Image */}
-                <div className="absolute inset-0 opacity-20">
+                {/* Card Image at Top */}
+                <div className="w-full h-64 overflow-hidden">
                   <img
                     src="https://i.ibb.co/m5Xz2Vy2/image.png"
-                    alt="Card Background"
+                    alt="Card Banner"
                     className="w-full h-full object-cover"
                   />
                 </div>
 
                 {/* Card Content */}
-                <div className="relative z-10 flex flex-col justify-between h-full">
+                <div className="relative z-10 p-8 space-y-6">
                   <div>
-                    <h3 className="text-white text-sm font-bold tracking-widest opacity-75">JONATHAN ROUMIE</h3>
-                    <h3 className="text-white text-sm font-bold tracking-widest opacity-75">FAN CARD</h3>
+                    <h3 className="text-white text-sm font-bold tracking-widest">JONATHAN ROUMIE</h3>
+                    <h3 className="text-white text-sm font-bold tracking-widest">FAN CARD</h3>
                   </div>
 
-                  <div>
-                    <p className="text-white/50 text-xs mb-2 tracking-wide">YOUR NAME</p>
+                  <div className="bg-gradient-to-br from-blue-600 to-purple-700 rounded-lg p-6 space-y-4">
+                    <p className="text-white/70 text-xs tracking-wide">YOUR NAME</p>
                     <motion.p
                       key={cardName}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-white text-2xl font-black tracking-wider min-h-12 break-words"
+                      className="text-white text-3xl font-black tracking-wider min-h-12 break-words"
                     >
                       {cardName || 'ENTER YOUR NAME'}
                     </motion.p>
                   </div>
 
                   <div className="flex justify-between items-center">
-                    <span className="text-white text-xs font-bold tracking-widest">VERIFIED</span>
-                    <div className="w-12 h-8 bg-white/20 rounded flex items-center justify-center">
-                      <span className="text-white text-xs font-bold">LOGO</span>
+                    <span className="text-white text-xs font-bold tracking-widest">VERIFIED MEMBER</span>
+                    <div className="w-12 h-8 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">
+                      ✓
                     </div>
                   </div>
                 </div>

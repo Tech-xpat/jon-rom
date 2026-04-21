@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useUserAuth } from '@/components/user/UserAuthProvider'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Upload, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
+import { Upload, CheckCircle, AlertCircle, Loader2, Copy, Check } from 'lucide-react'
 import Link from 'next/link'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
@@ -17,6 +17,19 @@ export default function PaymentProofPage() {
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
   const [confirmPaid, setConfirmPaid] = useState(false)
+  const [copiedWallet, setCopiedWallet] = useState<'btc' | 'usdt' | null>(null)
+
+  // Wallet addresses (these should come from admin settings in production)
+  const wallets = {
+    btc: '1A1z7agoat2LWLCZFBX3xCjYjnAEoM81tS',
+    usdt: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+  }
+
+  const copyToClipboard = (address: string, type: 'btc' | 'usdt') => {
+    navigator.clipboard.writeText(address)
+    setCopiedWallet(type)
+    setTimeout(() => setCopiedWallet(null), 2000)
+  }
 
   useEffect(() => {
     if (!loading && !user) {
@@ -147,6 +160,58 @@ export default function PaymentProofPage() {
                   <span className="text-sm">{error}</span>
                 </div>
               )}
+
+              {/* Crypto Wallet Addresses */}
+              <div className="border-b border-white/10 pb-6 space-y-4">
+                <h2 className="text-xl font-black tracking-widest">PAYMENT WALLETS</h2>
+                <p className="text-gray-400 text-sm">Send payment to one of the addresses below. Copy address and paste in your wallet.</p>
+
+                <div className="space-y-4">
+                  {/* Bitcoin */}
+                  <div className="bg-white/3 border border-orange-500/30 rounded-xl p-4">
+                    <p className="text-gray-400 text-xs tracking-widest mb-3 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                      BITCOIN (BTC)
+                    </p>
+                    <div className="flex items-center gap-2 bg-black/50 rounded-lg p-3">
+                      <code className="text-white text-xs font-mono flex-1 break-all">{wallets.btc}</code>
+                      <button
+                        onClick={() => copyToClipboard(wallets.btc, 'btc')}
+                        className="flex-shrink-0 p-2 hover:bg-white/10 rounded transition-colors"
+                        title="Copy address"
+                      >
+                        {copiedWallet === 'btc' ? (
+                          <Check size={16} className="text-green-400" />
+                        ) : (
+                          <Copy size={16} className="text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* USDT */}
+                  <div className="bg-white/3 border border-green-500/30 rounded-xl p-4">
+                    <p className="text-gray-400 text-xs tracking-widest mb-3 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      USDT (ERC-20)
+                    </p>
+                    <div className="flex items-center gap-2 bg-black/50 rounded-lg p-3">
+                      <code className="text-white text-xs font-mono flex-1 break-all">{wallets.usdt}</code>
+                      <button
+                        onClick={() => copyToClipboard(wallets.usdt, 'usdt')}
+                        className="flex-shrink-0 p-2 hover:bg-white/10 rounded transition-colors"
+                        title="Copy address"
+                      >
+                        {copiedWallet === 'usdt' ? (
+                          <Check size={16} className="text-green-400" />
+                        ) : (
+                          <Copy size={16} className="text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {/* File Upload Area */}
               <div>

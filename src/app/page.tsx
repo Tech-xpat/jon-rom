@@ -42,6 +42,24 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Store CTA */}
+        <section className="py-16 px-4 bg-gradient-to-b from-transparent to-blue-900/10">
+          <div className="max-w-2xl mx-auto text-center">
+            <h2 className="text-white text-3xl md:text-4xl font-black mb-4 tracking-widest">
+              JONATHAN ROUMIE STORE
+            </h2>
+            <p className="text-gray-400 mb-8 max-w-sm mx-auto">
+              Shop exclusive merchandise, fan cards, and VIP event passes.
+            </p>
+            <Link
+              href="/store"
+              className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-bold tracking-widest transition-colors"
+            >
+              VISIT STORE
+            </Link>
+          </div>
+        </section>
+
         <YouTubeClips />
         <LatestNews />
         <Gallery />
