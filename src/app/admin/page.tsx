@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Package, Image, CreditCard, TrendingUp, Users, DollarSign, Settings, Shield, Database, Activity, BarChart3, Globe } from 'lucide-react'
+import { Package, Image, CreditCard, TrendingUp, Users, DollarSign, Settings, Shield, Database, Activity, BarChart3, Globe, FileText } from 'lucide-react'
 import Link from 'next/link'
 import { useAdminAuth } from '@/components/admin/AdminAuthProvider'
 
@@ -86,9 +86,9 @@ export default function AdminDashboardPage() {
   ]
 
   const adminControls = [
+    { label: 'Content Management', icon: FileText, href: '/admin/content', description: 'Edit hero, banners, sections' },
     { label: 'Site Settings', icon: Settings, href: '/admin/settings', description: 'Global site configuration' },
     { label: 'Crypto Wallets', icon: Database, href: '/admin/wallets', description: 'Manage payment addresses' },
-    { label: 'Content Management', icon: Globe, href: '/admin/catalog', description: 'Page content & catalog' },
     { label: 'System Status', icon: Shield, href: '/admin/system', description: 'Monitor system health' },
   ]
 
