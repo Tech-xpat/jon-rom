@@ -2,12 +2,19 @@
 
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react'
 import { 
-  signInWithEmailAndPassword, 
+  signInWithPopup, 
+  GoogleAuthProvider,
   signOut, 
   onAuthStateChanged,
   AuthError
 } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
+
+// Only these emails can access admin
+const ALLOWED_ADMIN_EMAILS = [
+  'empiredigitalsworldwide@gmail.com',
+  'jonathanroumie0512345@gmail.com'
+]
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type AdminRole = 'super-admin' | 'admin' | 'moderator' | null
@@ -17,7 +24,7 @@ interface AdminAuthCtx {
   adminRole: AdminRole
   loading: boolean
   error: string | null
-  login: (email: string, password: string) => Promise<void>
+  loginWithGoogle: () => Promise<void>
   logout: () => Promise<void>
   clearError: () => void
   getToken: () => Promise<string | null>
@@ -27,7 +34,7 @@ interface AdminAuthCtx {
 
 const Ctx = createContext<AdminAuthCtx>({
   user: null, adminRole: null, loading: false, error: null,
-  login: async () => {}, logout: async () => {}, clearError: () => {},
+  loginWithGoogle: async () => {}, logout: async () => {}, clearError: () => {},
   getToken: async () => null, changePassword: async () => {}, isAdmin: false,
 })
 
@@ -74,28 +81,26 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     return unsubscribe
   }, [])
 
-  const login = async (email: string, password: string) => {
-    setLoading(true)
+  const loginWithGoogle = async () => {
     setError(null)
     try {
-      if (!auth) {
-        throw new Error('Firebase not initialized')
-      }
-
-      console.log('[Admin Auth] Firebase login attempt:', email)
-      const result = await signInWithEmailAndPassword(auth, email, password)
+      if (!auth) throw new Error('Firebase not initialized')
       
-      // Role check will happen automatically via onAuthStateChanged
-      console.log('[Admin Auth] Firebase login successful')
+      const provider = new GoogleAuthProvider()
+      const result = await signInWithPopup(auth, provider)
+      
+      if (!result.user.email || !ALLOWED_ADMIN_EMAILS.includes(result.user.email)) {
+        await signOut(auth)
+        setError('This Google account is not authorized to access admin')
+        throw new Error('Unauthorized email')
+      }
+      
+      console.log('[Admin Auth] Google login successful:', result.user.email)
     } catch (e: any) {
-      const errorMsg = getFirebaseErrorMessage(e)
-      console.error('[Admin Auth] Login error:', errorMsg)
+      const errorMsg = e.message || 'Google login failed'
+      console.error('[Admin Auth] Google login error:', errorMsg)
       setError(errorMsg)
-      setUser(null)
-      setAdminRole(null)
       throw e
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -166,7 +171,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={{
       user, adminRole, loading, error,
-      login, logout, clearError: () => setError(null),
+      loginWithGoogle, logout, clearError: () => setError(null),
       getToken, changePassword, isAdmin: adminRole !== null,
     }}>
       {children}

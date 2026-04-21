@@ -2,16 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Shield, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react'
+import { Shield, AlertCircle, Loader2, Chrome } from 'lucide-react'
 import { useAdminAuth } from '@/components/admin/AdminAuthProvider'
 import { useRouter } from 'next/navigation'
 
 export default function AdminLoginPage() {
-  const { login, loading, error, clearError, user, adminRole } = useAdminAuth()
+  const { loginWithGoogle, loading, error, clearError, user, adminRole } = useAdminAuth()
   const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // If already authenticated, redirect immediately
@@ -19,13 +16,12 @@ export default function AdminLoginPage() {
     if (user && adminRole) router.replace('/admin')
   }, [user, adminRole, router])
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleGoogleLogin = async () => {
     setIsSubmitting(true)
     try {
-      await login(email, password)
+      await loginWithGoogle()
     } catch (e) {
-      console.error('[v0] Login failed:', e)
+      console.error('[Admin Login] Google login failed:', e)
     } finally {
       setIsSubmitting(false)
     }
@@ -74,58 +70,21 @@ export default function AdminLoginPage() {
           {isLoading ? (
             <div className="flex flex-col items-center gap-3 py-4">
               <Loader2 size={28} className="text-red-500 animate-spin" />
-              <p className="text-gray-400 text-sm text-center">Authenticating...</p>
+              <p className="text-gray-400 text-sm text-center">Authenticating with Google...</p>
             </div>
           ) : (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="block text-gray-400 text-xs mb-2 tracking-wide">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-transparent text-sm focus:outline-none focus:border-red-500/50 transition"
-                  disabled={isLoading}
-                  required
-                  autoComplete="email"
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-400 text-xs mb-2 tracking-wide">Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 pr-10 text-white placeholder-transparent text-sm focus:outline-none focus:border-red-500/50 transition"
-                    disabled={isLoading}
-                    required
-                    autoComplete="current-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300"
-                    tabIndex={-1}
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading || !email || !password}
-                className="w-full bg-red-600 text-white py-3 rounded-lg font-bold tracking-wide hover:bg-red-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-6"
-              >
-                Sign In
-              </button>
-            </form>
+            <button
+              onClick={handleGoogleLogin}
+              disabled={isLoading}
+              className="w-full bg-white text-black py-3 rounded-lg font-bold tracking-wide hover:bg-gray-100 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+            >
+              <Chrome size={20} />
+              Sign In with Google
+            </button>
           )}
 
           <p className="text-center text-gray-600 text-xs">
-            Only authorized admin accounts can access this panel.
+            Only authorized Google accounts can access this panel.
           </p>
         </div>
       </motion.div>
