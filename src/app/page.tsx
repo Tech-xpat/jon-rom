@@ -33,8 +33,8 @@ export default function HomePage() {
                 APPLY FOR CARD
               </Link>
               <Link
-                href="/fan-login"
-                className="inline-block bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-xl font-bold tracking-widest transition-colors border border-white/20"
+                href="/dashboard-login"
+                className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-bold tracking-widest transition-colors"
               >
                 FAN LOGIN
               </Link>

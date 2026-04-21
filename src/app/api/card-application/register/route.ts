@@ -50,23 +50,22 @@ export async function POST(req: NextRequest) {
       uid: userRecord.uid,
       email,
       createdAt: new Date().toISOString(),
-      status: 'pending', // pending approval from admin
+      status: 'pending',
       approved: false,
       whitelisted: false,
-      cardLevel: null, // 'silver' | 'gold' | 'diamond'
-      cardNumber: null,
-      paymentStatus: 'unpaid', // unpaid, processing, confirmed
-      paymentMethod: null,
-      transactionId: null,
-      membershipLevel: 'basic', // basic, premium, vip
+      cardLevel: 'basic',
+      cardNumber: '',
+      paymentStatus: 'unpaid',
+      paymentMethod: '',
+      transactionId: '',
+      membershipLevel: 'basic',
       cardsGenerated: 0,
-      maxCards: 1, // basic users get 1 card
+      maxCards: 1,
+      fanStatus: 'pending',
       profile: {
-        avatar: null,
-        bio: null,
         verified: false,
       },
-    })
+    }, { merge: true })
 
     console.log('[Card Application] User document created in Firestore')
 

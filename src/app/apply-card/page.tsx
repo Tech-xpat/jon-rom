@@ -37,10 +37,10 @@ export default function ApplyCardPage() {
       setSubmitted(true)
       setEmail('')
 
-      // Redirect to dashboard after 2 seconds
+      // Redirect to dashboard-login after 3 seconds
       setTimeout(() => {
-        window.location.href = '/dashboard'
-      }, 2000)
+        window.location.href = '/dashboard-login'
+      }, 3000)
     } catch (err: any) {
       setError(err.message || 'An error occurred')
     } finally {
