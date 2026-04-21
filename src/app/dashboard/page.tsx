@@ -100,6 +100,26 @@ export default function DashboardPage() {
             </div>
           </motion.div>
 
+          {/* Card Application Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-2xl p-8 mb-8"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-white text-2xl font-black mb-2">GET YOUR FAN CARD</h2>
+                <p className="text-gray-400 text-sm">Personalize your exclusive Jonathan Roumie Fan Card</p>
+              </div>
+              <Link
+                href="/dashboard/card-personalize"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-bold whitespace-nowrap transition-colors"
+              >
+                Start Now
+              </Link>
+            </div>
+          </motion.div>
+
           {/* Status Section */}
           {!whitelisted ? (
             <motion.div
