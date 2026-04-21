@@ -27,16 +27,16 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                href="/fan-login"
+                href="/apply-card"
                 className="inline-block bg-jcvd-red hover:bg-red-700 text-white px-8 py-4 rounded-xl font-bold tracking-widest transition-colors"
               >
-                FAN ACCOUNT
+                APPLY FOR CARD
               </Link>
               <Link
-                href="/fan-card"
+                href="/fan-login"
                 className="inline-block bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-xl font-bold tracking-widest transition-colors border border-white/20"
               >
-                LEARN MORE
+                FAN LOGIN
               </Link>
             </div>
           </div>
