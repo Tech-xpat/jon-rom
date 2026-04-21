@@ -98,8 +98,10 @@ export function UserAuthProvider({ children }: { children: ReactNode }) {
         setWhitelisted(userData.whitelisted)
         setFanStatus(userData.fanStatus)
 
-        // 🔥 redirect to dashboard — shows status, transactions, and card access
-        router.push('/dashboard')
+        // User is authenticated - stay on current page or redirect to dashboard based on pathname
+        if (!pathname?.startsWith('/dashboard') && !pathname?.startsWith('/fan-card')) {
+          router.push('/dashboard')
+        }
 
       } catch (err) {
         console.error('[Auth Flow Error]', err)

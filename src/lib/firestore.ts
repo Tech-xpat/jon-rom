@@ -277,7 +277,7 @@ export async function createUser(email: string, googleId?: string): Promise<User
     whitelisted: false,
     fanStatus: 'pending',
     registeredAt: new Date().toISOString(),
-    paymentStatus: 'pending',
+    paymentStatus: 'unpaid',
   })
   return {
     id: ref.id,
@@ -286,7 +286,7 @@ export async function createUser(email: string, googleId?: string): Promise<User
     whitelisted: false,
     fanStatus: 'pending',
     registeredAt: new Date().toISOString(),
-    paymentStatus: 'pending',
+    paymentStatus: 'unpaid',
   }
 }
 
@@ -400,4 +400,4 @@ export async function updatePageContent(section: string, data: Partial<PageConte
       updatedBy,
     })
   }
-    }
+}

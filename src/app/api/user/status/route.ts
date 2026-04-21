@@ -27,7 +27,7 @@ export async function GET(request: Request) {
       return Response.json({
         whitelisted: false,
         fanStatus: 'pending',
-        paymentStatus: 'pending',
+        paymentStatus: 'unpaid',
       })
     }
 
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
     return Response.json({
       whitelisted: userData.whitelisted || false,
       fanStatus: userData.fanStatus || 'pending',
-      paymentStatus: userData.paymentStatus || 'pending',
+      paymentStatus: userData.paymentStatus || 'unpaid',
     })
   } catch (error: any) {
     console.error('Get status error:', error)

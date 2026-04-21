@@ -16,21 +16,29 @@ export default function HomePage() {
         <HeroSlider />
         <WelcomeBanner />
         
-        {/* Fan Card Application CTA */}
+        {/* Fan Login & Card CTA */}
         <section className="py-16 px-4 bg-gradient-to-b from-transparent to-red-900/10">
           <div className="max-w-2xl mx-auto text-center">
             <h2 className="text-white text-3xl md:text-4xl font-black mb-4 tracking-widest">
               GET YOUR FAN CARD
             </h2>
             <p className="text-gray-400 mb-8 max-w-sm mx-auto">
-              Own an official Jonathan Roumie Fan Card. Apply now and complete your membership.
+              Own an official Jonathan Roumie Fan Card. Sign in to your account or apply now.
             </p>
-            <Link
-              href="/fan-card"
-              className="inline-block bg-jcvd-red hover:bg-red-700 text-white px-8 py-4 rounded-xl font-bold tracking-widest transition-colors"
-            >
-              APPLY FOR CARD
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/fan-login"
+                className="inline-block bg-jcvd-red hover:bg-red-700 text-white px-8 py-4 rounded-xl font-bold tracking-widest transition-colors"
+              >
+                FAN ACCOUNT
+              </Link>
+              <Link
+                href="/fan-card"
+                className="inline-block bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-xl font-bold tracking-widest transition-colors border border-white/20"
+              >
+                LEARN MORE
+              </Link>
+            </div>
           </div>
         </section>
 
