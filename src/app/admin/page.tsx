@@ -86,9 +86,10 @@ export default function AdminDashboardPage() {
   ]
 
   const adminControls = [
+    { label: 'Payment Verification', icon: DollarSign, href: '/admin/payments', description: 'Approve/reject payment submissions' },
+    { label: 'Card Pricing & Payment', icon: CreditCard, href: '/admin/card-pricing', description: 'Set fan card prices & wallet addresses' },
     { label: 'Content Management', icon: FileText, href: '/admin/content', description: 'Edit hero, banners, sections' },
     { label: 'Site Settings', icon: Settings, href: '/admin/settings', description: 'Global site configuration' },
-    { label: 'Crypto Wallets', icon: Database, href: '/admin/wallets', description: 'Manage payment addresses' },
     { label: 'System Status', icon: Shield, href: '/admin/system', description: 'Monitor system health' },
   ]
 
