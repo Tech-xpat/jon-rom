@@ -14,6 +14,7 @@ export default function AdminCardPricingPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [pricing, setPricing] = useState({
+    cardBaseFee: 4.99,
     silver: 50,
     gold: 75,
     diamond: 150,
@@ -112,8 +113,28 @@ export default function AdminCardPricingPage() {
           <div className="bg-white/5 border border-white/10 rounded-lg p-8 space-y-6">
             <h2 className="text-2xl font-black tracking-widest">FAN CARD PRICING</h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
+            <div>
+              <label className="text-sm font-bold block mb-2">CARD GENERATION FEE (USD)</label>
+              <div className="flex items-center gap-2 max-w-xs">
+                <span className="text-gray-400">$</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={pricing.cardBaseFee}
+                  onChange={(e) => setPricing({
+                    ...pricing,
+                    cardBaseFee: parseFloat(e.target.value) || 0
+                  })}
+                  className="flex-1 bg-black/50 border border-white/10 text-white px-4 py-2 rounded focus:outline-none focus:border-red-500"
+                />
+              </div>
+              <p className="text-gray-500 text-xs mt-2">Charged for every fan card generated</p>
+            </div>
+
+            <div className="border-t border-white/10 pt-6">
+              <h3 className="text-lg font-bold tracking-widest mb-4">FAN LEVEL PRICING</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[
                 { key: 'silver', label: 'SILVER', icon: '⚪' },
                 { key: 'gold', label: 'GOLD', icon: '✨' },
                 { key: 'diamond', label: 'DIAMOND', icon: '💎' }
@@ -137,8 +158,9 @@ export default function AdminCardPricingPage() {
                   </div>
                 </div>
               ))}
+                </div>
+              </div>
             </div>
-          </div>
 
           {/* Crypto Wallets */}
           <div className="bg-white/5 border border-white/10 rounded-lg p-8 space-y-6">

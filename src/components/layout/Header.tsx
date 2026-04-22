@@ -14,7 +14,6 @@ const navLinks = [
   { name: 'HOME', path: '/' },
   { name: 'SHOP', path: '/shop' },
   { name: 'REWARDS', path: '/rewards' },
-  { name: 'FAN CARD', path: '/fan-card' },
   { name: 'CONTACT', path: '/contact' },
 ]
 

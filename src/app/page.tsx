@@ -21,22 +21,22 @@ export default function HomePage() {
         <FanCardSection />
 
         {/* Store CTA with Image */}
-        <section className="py-16 px-4 bg-gradient-to-b from-transparent to-blue-900/10">
-          <div className="max-w-4xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-              <div>
+        <section className="py-24 px-4 bg-gradient-to-b from-transparent via-blue-900/5 to-transparent">
+          <div className="max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+              <div className="order-2 md:order-1">
                 <img
                   src="/images/shop/shop-hero.jpg"
                   alt="Store"
-                  className="w-full h-64 object-cover rounded-xl shadow-2xl"
+                  className="w-full h-80 object-cover rounded-2xl shadow-2xl"
                 />
               </div>
-              <div className="text-center md:text-left">
-                <h2 className="text-white text-3xl md:text-4xl font-black mb-4 tracking-widest">
+              <div className="order-1 md:order-2 space-y-6">
+                <h2 className="text-white text-4xl md:text-5xl font-black tracking-widest">
                   JONATHAN ROUMIE STORE
                 </h2>
-                <p className="text-gray-400 mb-8">
-                  Shop exclusive merchandise, fan cards, and VIP event passes.
+                <p className="text-gray-400 text-lg">
+                  Shop exclusive merchandise, apparel, and collectibles.
                 </p>
                 <Link
                   href="/store"

@@ -21,11 +21,11 @@ export default function FanCardSection() {
   }
 
   if (!isAuthenticated) {
-    // Unauthenticated view: Show card preview + login/signup
+    // Unauthenticated view: Show card preview + CTA
     return (
-      <section className="py-16 px-4 bg-gradient-to-b from-transparent to-red-900/10">
+      <section className="py-20 px-4 bg-gradient-to-b from-transparent via-red-900/5 to-transparent">
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             {/* Card Preview on Left */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -37,7 +37,7 @@ export default function FanCardSection() {
                 {/* Card Image at Top */}
                 <div className="w-full h-64 overflow-hidden">
                   <img
-                    src="https://i.ibb.co/m5Xz2Vy2/image.png"
+                    src="/images/jvcd-avatar.jpg"
                     alt="Card Banner"
                     className="w-full h-full object-cover"
                   />
@@ -101,17 +101,13 @@ export default function FanCardSection() {
               {/* Auth Buttons */}
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
-                  href="/auth"
+                  href="/fan-card"
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-bold tracking-widest transition-colors flex items-center justify-center gap-3 group text-center"
                 >
-                  SIGN IN / CREATE ACCOUNT
+                  GET STARTED
                   <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
-
-              <p className="text-gray-500 text-sm text-center">
-                Already have an account? Sign in to continue.
-              </p>
             </motion.div>
           </div>
         </div>

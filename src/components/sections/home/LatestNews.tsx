@@ -1,39 +1,72 @@
 'use client'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
+import { ArrowRight } from 'lucide-react'
 
 const newsItems = [
-  { id: 1, image: '/images/news/music-video.jpg', title: "I WON'T LOOK BACK", subtitle: 'MUSIC VIDEO', date: "11th MARCH '19" },
-  { id: 2, image: '/images/news/birthday.jpg', title: 'CLAUDE GOETZ', subtitle: 'BIRTHDAY VIDEO', date: "10th MARCH '19" },
-  { id: 3, image: '/images/news/interview.jpg', title: 'THR INTERVIEW', subtitle: 'SEE INTERVIEW', date: "2nd MARCH '19" },
+  { id: 1, image: '/images/news/birthday.jpg', title: 'Birthday Celebration', date: 'April 15, 2024' },
+  { id: 2, image: '/images/news/interview.jpg', title: 'Exclusive Interview', date: 'April 10, 2024' },
+  { id: 3, image: '/images/news/movie.jpg', title: 'New Movie Project', date: 'April 5, 2024' },
 ]
 
 export default function LatestNews() {
   return (
-    <section className="bg-black py-8 px-4">
-      <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} viewport={{ once: true }} className="text-white text-center text-lg tracking-[0.4em] mb-8">
-        LATEST NEWS
-      </motion.h2>
-      <div className="space-y-8 max-w-2xl mx-auto">
-        {newsItems.map((item, index) => (
-          <motion.article key={item.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: index * 0.1 }} viewport={{ once: true }} className="group cursor-pointer">
-            <div className="relative overflow-hidden mb-4 aspect-video">
-              <Image src={item.image} alt={item.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
-              <div className="absolute bottom-2 right-2 opacity-70">
-                <span className="text-white text-xs tracking-widest">JONATHAN <span className="font-normal">ROUMIE</span></span>
+    <section className="bg-gradient-to-b from-black to-black/90 py-20 px-4 border-t border-white/5">
+      <div className="max-w-6xl mx-auto">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} 
+          whileInView={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.5 }} 
+          viewport={{ once: true }} 
+          className="text-center mb-12"
+        >
+          <h2 className="text-white text-3xl md:text-4xl font-black tracking-widest mb-2">
+            LATEST NEWS
+          </h2>
+          <p className="text-gray-400">Stay updated with the latest updates</p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {newsItems.map((item, index) => (
+            <motion.article 
+              key={item.id} 
+              initial={{ opacity: 0, y: 20 }} 
+              whileInView={{ opacity: 1, y: 0 }} 
+              transition={{ duration: 0.5, delay: index * 0.1 }} 
+              viewport={{ once: true }} 
+              className="group cursor-pointer bg-white/5 border border-white/10 rounded-lg overflow-hidden hover:border-white/20 transition-colors"
+            >
+              <div className="relative overflow-hidden aspect-video">
+                <Image 
+                  src={item.image} 
+                  alt={item.title} 
+                  fill 
+                  className="object-cover transition-transform duration-300 group-hover:scale-105" 
+                />
               </div>
-            </div>
-            <div className="text-center">
-              <h3 className="text-jcvd-red text-lg tracking-wide font-medium mb-1">{item.title}</h3>
-              <p className="text-white text-sm tracking-wide mb-1">{item.subtitle}</p>
-              <p className="text-jcvd-gray text-sm tracking-wide">{item.date}</p>
-            </div>
-          </motion.article>
-        ))}
+              <div className="p-4 space-y-2">
+                <p className="text-gray-400 text-xs tracking-widest">{item.date}</p>
+                <h3 className="text-white font-bold text-lg tracking-wide group-hover:text-blue-400 transition-colors">
+                  {item.title}
+                </h3>
+              </div>
+            </motion.article>
+          ))}
+        </div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} 
+          whileInView={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.5, delay: 0.3 }} 
+          viewport={{ once: true }} 
+          className="flex justify-center mt-12"
+        >
+          <button className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-lg font-bold tracking-widest transition-colors">
+            VIEW ALL NEWS
+            <ArrowRight size={18} />
+          </button>
+        </motion.div>
       </div>
-      <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }} viewport={{ once: true }} className="flex justify-center mt-8">
-        <button className="border border-white/50 text-white px-12 py-3 tracking-[0.4em] hover:bg-white hover:text-black transition-colors">SEE MORE</button>
-      </motion.div>
     </section>
   )
 }
