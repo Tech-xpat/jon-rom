@@ -1,6 +1,14 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { UserAuthProvider } from '@/components/user/UserAuthProvider'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: '#000000',
+}
 
 export const metadata: Metadata = {
   title: 'Jonathan Roumie World – Official Website',

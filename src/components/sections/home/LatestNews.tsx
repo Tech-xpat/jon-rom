@@ -4,29 +4,32 @@ import Image from 'next/image'
 import { ArrowRight } from 'lucide-react'
 
 const newsItems = [
-  { id: 1, image: '/images/news/birthday.jpg', title: 'Birthday Celebration', date: 'April 15, 2024' },
-  { id: 2, image: '/images/news/interview.jpg', title: 'Exclusive Interview', date: 'April 10, 2024' },
-  { id: 3, image: '/images/news/movie.jpg', title: 'New Movie Project', date: 'April 5, 2024' },
+  { id: 1, image: '/images/news/Hallow\'s Lent Pray40.jfif', title: 'Lent Prayer Campaign', date: 'April 24, 2026' },
+  { id: 2, image: '/images/news/Rosie Roumie.jfif', title: 'Family Updates', date: 'April 22, 2026' },
+  { id: 3, image: '/images/news/download (2).jfif', title: 'Latest Project News', date: 'April 20, 2026' },
+  { id: 4, image: '/images/news/download (3).jfif', title: 'Exclusive Updates', date: 'April 18, 2026' },
+  { id: 5, image: '/images/news/download (4).jfif', title: 'Recent Announcement', date: 'April 16, 2026' },
+  { id: 6, image: '/images/news/hello my love it\'s me Jonathan roumie I love you all.jfif', title: 'Special Message', date: 'April 14, 2026' },
 ]
 
 export default function LatestNews() {
   return (
-    <section className="bg-gradient-to-b from-black to-black/90 py-20 px-4 border-t border-white/5">
+    <section className="bg-gradient-to-b from-black to-black/90 py-12 sm:py-16 md:py-20 px-4 border-t border-white/5">
       <div className="max-w-6xl mx-auto">
         <motion.div 
           initial={{ opacity: 0, y: 20 }} 
           whileInView={{ opacity: 1, y: 0 }} 
           transition={{ duration: 0.5 }} 
           viewport={{ once: true }} 
-          className="text-center mb-12"
+          className="text-center mb-8 sm:mb-10 md:mb-12"
         >
-          <h2 className="text-white text-3xl md:text-4xl font-black tracking-widest mb-2">
+          <h2 className="text-white text-2xl sm:text-3xl md:text-4xl font-black tracking-widest mb-2">
             LATEST NEWS
           </h2>
           <p className="text-gray-400">Stay updated with the latest updates</p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           {newsItems.map((item, index) => (
             <motion.article 
               key={item.id} 
@@ -59,9 +62,9 @@ export default function LatestNews() {
           whileInView={{ opacity: 1, y: 0 }} 
           transition={{ duration: 0.5, delay: 0.3 }} 
           viewport={{ once: true }} 
-          className="flex justify-center mt-12"
+          className="flex justify-center mt-8 sm:mt-10 md:mt-12"
         >
-          <button className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-lg font-bold tracking-widest transition-colors">
+          <button className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 sm:px-8 py-2 sm:py-3 rounded-lg font-bold tracking-widest transition-colors text-sm sm:text-base">
             VIEW ALL NEWS
             <ArrowRight size={18} />
           </button>

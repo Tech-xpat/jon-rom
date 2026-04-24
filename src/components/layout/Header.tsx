@@ -23,22 +23,27 @@ export default function Header({ variant = 'main' }: HeaderProps) {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-sm border-b border-white/5">
-        <div className="flex items-center justify-between px-4 py-3">
-          <Link href="/" className="flex flex-col">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-b border-white/10">
+        <div className="flex items-center justify-between px-2 sm:px-4 py-1.5 sm:py-2">
+          <Link href="/" className="flex items-center gap-1 sm:gap-2">
+            <img 
+              src="/images/logo.png" 
+              alt="Jonathan Roumie Official" 
+              className="h-8 sm:h-10 md:h-12 w-auto object-contain"
+            />
             {variant === 'main' ? (
-              <>
-                <span className="text-white text-xl font-bold tracking-wider">
-                  JONATHAN <span className="font-normal">ROUMIE</span>
+              <div className="hidden sm:flex flex-col">
+                <span className="text-white text-xs tracking-wide leading-none">
+                  Official Website
                 </span>
-                <span className="text-jcvd-gray text-xs tracking-wide">
-                  Official Website Jonathan Roumie &copy; 2026
+                <span className="text-jcvd-gray text-xs tracking-wider leading-none">
+                  Jonathan Roumie
                 </span>
-              </>
+              </div>
             ) : (
-              <div className="flex flex-col items-center">
-                <span className="text-white text-2xl font-bold tracking-widest">
-                  JONATHAN<span className="mx-1 text-lg">SHOP</span>
+              <div className="hidden sm:flex flex-col items-start">
+                <span className="text-white text-sm font-bold tracking-widest leading-none">
+                  SHOP
                 </span>
               </div>
             )}
