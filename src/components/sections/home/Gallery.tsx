@@ -7,26 +7,30 @@ const galleryImages = [
   { id: 2, src: '/images/gallery/gallery-2.jpg', alt: 'Jonathan Roumie' },
   { id: 3, src: '/images/gallery/gallery-3.jpg', alt: 'Jonathan Roumie' },
   { id: 4, src: '/images/gallery/gallery-4.jpg', alt: 'Jonathan Roumie' },
+  { id: 5, src: '/images/gallery/gallery-5.jpg', alt: 'Jonathan Roumie' },
+  { id: 6, src: '/images/gallery/gallery-6.jpg', alt: 'Jonathan Roumie' },
+  { id: 7, src: '/images/gallery/gallery-7.jpg', alt: 'Jonathan Roumie' },
+  { id: 8, src: '/images/gallery/gallery-8.jpg', alt: 'Jonathan Roumie' },
 ]
 
 export default function Gallery() {
   return (
-    <section className="bg-gradient-to-b from-black to-black/90 py-20 px-4 border-t border-white/5">
+    <section className="bg-gradient-to-b from-black to-black/90 py-12 sm:py-16 md:py-20 px-4 border-t border-white/5">
       <div className="max-w-6xl mx-auto">
         <motion.div 
           initial={{ opacity: 0, y: 20 }} 
           whileInView={{ opacity: 1, y: 0 }} 
           transition={{ duration: 0.5 }} 
           viewport={{ once: true }} 
-          className="text-center mb-12"
+          className="text-center mb-8 sm:mb-10 md:mb-12"
         >
-          <h2 className="text-white text-3xl md:text-4xl font-black tracking-widest mb-2">
+          <h2 className="text-white text-2xl sm:text-3xl md:text-4xl font-black tracking-widest mb-2">
             GALLERY
           </h2>
           <p className="text-gray-400">Exclusive photos and moments</p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
           {galleryImages.map((image, index) => (
             <motion.div 
               key={image.id} 
@@ -52,9 +56,9 @@ export default function Gallery() {
           whileInView={{ opacity: 1, y: 0 }} 
           transition={{ duration: 0.5, delay: 0.3 }} 
           viewport={{ once: true }} 
-          className="flex justify-center mt-12"
+          className="flex justify-center mt-8 sm:mt-10 md:mt-12"
         >
-          <button className="bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-lg font-bold tracking-widest transition-colors">
+          <button className="bg-white/10 hover:bg-white/20 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-lg font-bold tracking-widest transition-colors text-sm sm:text-base">
             VIEW ALL
           </button>
         </motion.div>

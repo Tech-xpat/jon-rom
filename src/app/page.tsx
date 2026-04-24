@@ -21,28 +21,28 @@ export default function HomePage() {
         <FanCardSection />
 
         {/* Store CTA with Image */}
-        <section className="py-24 px-4 bg-gradient-to-b from-transparent via-blue-900/5 to-transparent">
+        <section className="py-12 sm:py-16 md:py-24 px-4 bg-gradient-to-b from-transparent via-blue-900/5 to-transparent">
           <div className="max-w-5xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-12 items-center">
               <div className="order-2 md:order-1">
                 <img
-                  src="/images/shop/shop-hero.jpg"
+                  src="/images/shop/WhatsApp Image 2026-04-23 at 19.13.27.jpeg"
                   alt="Store"
-                  className="w-full h-80 object-cover rounded-2xl shadow-2xl"
+                  className="w-full h-48 sm:h-64 md:h-80 object-cover rounded-xl sm:rounded-2xl shadow-2xl"
                 />
               </div>
-              <div className="order-1 md:order-2 space-y-6">
-                <h2 className="text-white text-4xl md:text-5xl font-black tracking-widest">
-                  JONATHAN ROUMIE STORE
+              <div className="order-1 md:order-2 space-y-4 sm:space-y-6">
+                <h2 className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-widest leading-tight">
+                  EXCLUSIVE STORE
                 </h2>
-                <p className="text-gray-400 text-lg">
-                  Shop exclusive merchandise, apparel, and collectibles.
+                <p className="text-gray-400 text-sm sm:text-base md:text-lg">
+                  Shop exclusive merchandise, apparel, and limited edition collectibles.
                 </p>
                 <Link
-                  href="/store"
-                  className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-bold tracking-widest transition-colors"
+                  href="/shop"
+                  className="inline-block bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg sm:rounded-xl font-bold tracking-widest transition-all text-sm sm:text-base"
                 >
-                  VISIT STORE
+                  VISIT STORE →
                 </Link>
               </div>
             </div>

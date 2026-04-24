@@ -13,9 +13,12 @@ interface Slide {
 }
 
 const defaultSlides: Slide[] = [
-  { id: 1, image: '/images/hero/hero-1.jpg', title: 'JONATHAN', subtitle: 'ROUMIE' },
-  { id: 2, image: '/images/hero/hero-2.jpg', title: 'ACTION' },
-  { id: 3, image: '/images/hero/hero-3.jpg', title: 'ADVENTURE' },
+  { id: 1, image: '/images/hero/18d4b710-e20d-4e9a-b966-9e792a5523df.jpeg', title: 'JONATHAN', subtitle: 'ROUMIE' },
+  { id: 2, image: '/images/hero/Johnathan Roumie.jfif', title: 'ACTION', subtitle: 'CINEMA' },
+  { id: 3, image: '/images/hero/Jonathan Roumie.jpeg', title: 'ADVENTURE', subtitle: 'AWAITS' },
+  { id: 4, image: '/images/hero/download (6).jfif', title: 'EXCLUSIVE', subtitle: 'CONTENT' },
+  { id: 5, image: '/images/hero/download (7).jfif', title: 'LATEST', subtitle: 'PROJECTS' },
+  { id: 6, image: '/images/hero/download (9).jfif', title: 'LEGENDARY', subtitle: 'ROLES' },
 ]
 
 export default function HeroSlider({ slides = defaultSlides }: { slides?: Slide[] }) {
@@ -53,7 +56,7 @@ export default function HeroSlider({ slides = defaultSlides }: { slides?: Slide[
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2, duration: 0.5 }}
-              className="text-white text-3xl md:text-5xl font-bold tracking-widest mb-2"
+              className="text-white text-2xl sm:text-3xl md:text-5xl font-bold tracking-widest mb-2"
             >
               {slides[currentSlide].title}
             </motion.h1>
@@ -62,7 +65,7 @@ export default function HeroSlider({ slides = defaultSlides }: { slides?: Slide[
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3, duration: 0.5 }}
-                className="text-white text-2xl md:text-4xl font-bold tracking-widest mb-6"
+                className="text-white text-xl sm:text-2xl md:text-4xl font-bold tracking-widest mb-4 sm:mb-6"
               >
                 {slides[currentSlide].subtitle}
               </motion.h2>
@@ -71,20 +74,20 @@ export default function HeroSlider({ slides = defaultSlides }: { slides?: Slide[
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.4, duration: 0.5 }}
-              className="border border-white/50 px-6 py-3 cursor-pointer hover:bg-white/10 transition-colors"
+              className="border border-white/50 px-4 sm:px-6 py-2 sm:py-3 cursor-pointer hover:bg-white/10 transition-colors"
             >
-              <span className="text-white text-sm tracking-widest block mb-1">CLICK TO WATCH</span>
-              <span className="text-jcvd-red text-xl font-bold tracking-widest">TRAILER</span>
+              <span className="text-white text-xs sm:text-sm tracking-widest block mb-1">CLICK TO WATCH</span>
+              <span className="text-jcvd-red text-base sm:text-xl font-bold tracking-widest">TRAILER</span>
             </motion.div>
           </div>
         </motion.div>
       </AnimatePresence>
 
-      <button onClick={prevSlide} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors p-2" aria-label="Previous slide">
-        <ChevronLeft size={40} />
+      <button onClick={prevSlide} className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors p-1 sm:p-2 z-10" aria-label="Previous slide">
+        <ChevronLeft size={24} className="sm:w-10 sm:h-10" />
       </button>
-      <button onClick={nextSlide} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors p-2" aria-label="Next slide">
-        <ChevronRight size={40} />
+      <button onClick={nextSlide} className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors p-1 sm:p-2 z-10" aria-label="Next slide">
+        <ChevronRight size={24} className="sm:w-10 sm:h-10" />
       </button>
 
       <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-3">

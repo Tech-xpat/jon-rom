@@ -60,15 +60,15 @@ export default function Footer({ variant = 'main' }: FooterProps) {
   }
 
   return (
-    <footer className="bg-black text-white py-8 border-t border-white/5">
+    <footer className="bg-black text-white py-6 sm:py-8 border-t border-white/5">
       <div className="flex flex-col items-center px-4">
-        <div className="mb-4">
-          <span className="text-2xl font-bold tracking-wider">JONATHAN <span className="font-normal">ROUMIE</span></span>
+        <div className="mb-3 sm:mb-4">
+          <span className="text-lg sm:text-2xl font-bold tracking-wider">JONATHAN <span className="font-normal">ROUMIE</span></span>
         </div>
-        <p className="text-jcvd-gray text-sm tracking-wide mb-2">
+        <p className="text-jcvd-gray text-xs sm:text-sm tracking-wide mb-1 sm:mb-2 text-center">
           OFFICIAL JONATHAN ROUMIE WEBSITE &copy; 2026
         </p>
-        <a href="#" className="text-jcvd-gray text-sm tracking-wide hover:text-white transition-colors mb-6">
+        <a href="#" className="text-jcvd-gray text-xs sm:text-sm tracking-wide hover:text-white transition-colors mb-4 sm:mb-6">
           *TERMS &amp; CONDITIONS
         </a>
         <button onClick={scrollToTop} className="border border-white/30 p-2 hover:bg-white/10 transition-colors" aria-label="Back to top">
