@@ -87,6 +87,34 @@ export default function FanCardSection() {
                 </ul>
               </div>
 
+              {/* Payment Methods */}
+              <div className="bg-gradient-to-r from-green-900/20 to-blue-900/20 border border-green-800/50 rounded-2xl p-6 space-y-4">
+                <p className="text-white font-bold text-sm tracking-widest mb-4">PAYMENT OPTIONS</p>
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-start gap-3">
+                    <div className="text-yellow-400 font-bold text-lg">₿</div>
+                    <div>
+                      <p className="text-white font-bold">Crypto (BTC / USDT)</p>
+                      <p className="text-gray-400">Secure blockchain payments accepted</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="text-green-400 font-bold text-lg">💵</div>
+                    <div>
+                      <p className="text-white font-bold">Cash App: $tinabeingblessed</p>
+                      <p className="text-gray-400">Quick and easy mobile payment</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="text-blue-400 font-bold text-lg">Ⓥ</div>
+                    <div>
+                      <p className="text-white font-bold">Venmo: Tina-McGowan-17</p>
+                      <p className="text-gray-400">Seamless peer-to-peer payment</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Login Required Message */}
               <div className="bg-yellow-900/20 border border-yellow-800/50 rounded-2xl p-6">
                 <div className="flex items-center gap-3 mb-3">

@@ -11,7 +11,13 @@ interface Order {
   currency: string
   status: string
   customer_email: string | null
+  customer_phone?: string
+  customer_address?: string
+  customer_alt_phone?: string
+  payment_method?: string
   product: string
+  type?: string
+  items?: any[]
   created: number
 }
 
@@ -52,7 +58,7 @@ export default function AdminOrdersPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-white text-2xl font-black tracking-widest">ORDERS</h1>
-          <p className="text-gray-500 text-sm mt-1">Fan card purchases via Stripe</p>
+          <p className="text-gray-500 text-sm mt-1">Shop orders & Fan card purchases</p>
         </div>
         <button onClick={load} className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-4 py-2.5 rounded-xl text-sm transition-colors">
           <RefreshCw size={14} /> Refresh
@@ -91,9 +97,12 @@ export default function AdminOrdersPage() {
             <thead>
               <tr className="border-b border-white/5 text-gray-500 text-xs tracking-widest">
                 <th className="text-left px-4 py-3">ORDER ID</th>
+                <th className="text-left px-4 py-3">TYPE</th>
                 <th className="text-left px-4 py-3">EMAIL</th>
+                <th className="text-left px-4 py-3">PHONE</th>
                 <th className="text-left px-4 py-3">PRODUCT</th>
                 <th className="text-left px-4 py-3">AMOUNT</th>
+                <th className="text-left px-4 py-3">PAYMENT</th>
                 <th className="text-left px-4 py-3">STATUS</th>
                 <th className="text-left px-4 py-3">DATE</th>
               </tr>
@@ -107,11 +116,20 @@ export default function AdminOrdersPage() {
                   className="border-b border-white/5 hover:bg-white/3 transition-colors"
                 >
                   <td className="px-4 py-3 text-white font-mono text-xs">{order.id.slice(-8)}</td>
-                  <td className="px-4 py-3 text-gray-400">{order.customer_email || '—'}</td>
-                  <td className="px-4 py-3 text-gray-300">{order.product}</td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      order.type === 'shop' ? 'bg-blue-900/30 text-blue-400' : 'bg-purple-900/30 text-purple-400'
+                    }`}>
+                      {order.type === 'shop' ? 'SHOP' : 'FAN-CARD'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-400 text-xs">{order.customer_email || '—'}</td>
+                  <td className="px-4 py-3 text-gray-400 text-xs">{order.customer_phone || '—'}</td>
+                  <td className="px-4 py-3 text-gray-300 text-xs">{order.product}</td>
                   <td className="px-4 py-3 text-white font-bold">
                     ${(order.amount / 100).toFixed(2)}
                   </td>
+                  <td className="px-4 py-3 text-gray-400 text-xs">{order.payment_method || '—'}</td>
                   <td className="px-4 py-3">
                     <span className={`text-xs px-2 py-1 rounded-full ${statusColor(order.status)}`}>
                       {order.status}
