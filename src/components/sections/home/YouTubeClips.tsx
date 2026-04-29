@@ -1,7 +1,6 @@
 'use client'
 import { motion } from 'framer-motion'
 import { Play, ExternalLink } from 'lucide-react'
-import Image from 'next/image'
 
 const clips = [
   { 
@@ -60,12 +59,12 @@ export default function YouTubeClips() {
               viewport={{ once: true }}
               className="group relative overflow-hidden rounded-xl"
             >
-              <div className="relative aspect-video bg-black">
-                <Image 
+              <div className="relative aspect-video bg-black overflow-hidden">
+                <img 
                   src={clip.image} 
                   alt={clip.title} 
-                  fill 
-                  className="object-cover group-hover:scale-110 transition-transform duration-300"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300" />
                 

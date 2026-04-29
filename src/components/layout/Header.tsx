@@ -13,6 +13,7 @@ interface HeaderProps {
 const navLinks = [
   { name: 'HOME', path: '/' },
   { name: 'SHOP', path: '/shop' },
+  { name: 'FAN CARD', path: '/fan-card' },
   { name: 'REWARDS', path: '/rewards' },
   { name: 'CONTACT', path: '/contact' },
 ]
@@ -29,7 +30,7 @@ export default function Header({ variant = 'main' }: HeaderProps) {
             <img 
               src="/images/logo.png" 
               alt="Jonathan Roumie Official" 
-              className="h-8 sm:h-10 md:h-12 w-auto object-contain"
+              className="h-10 sm:h-12 md:h-14 w-auto object-contain"
             />
             {variant === 'main' ? (
               <div className="hidden sm:flex flex-col">

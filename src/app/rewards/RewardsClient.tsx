@@ -1,331 +1,566 @@
 'use client'
 
-import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { Gift, Star, TrendingUp, Lock, CheckCircle, Zap } from 'lucide-react'
-import Image from 'next/image'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Eye, EyeOff, Loader, LogOut, Lock, Mail, CheckCircle, AlertCircle, Gift, Star, TrendingUp } from 'lucide-react'
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  Auth,
+  User,
+  updateProfile,
+} from 'firebase/auth'
+import { auth } from '@/lib/firebase'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 
-interface RewardTier {
+interface AuthForm {
+  email: string
+  password: string
   name: string
-  points: number
-  color: string
-  description: string
-  icon: React.ReactNode
-}
-
-interface PremiumBenefit {
-  name: string
-  description: string
-  icon: React.ReactNode
-  available: boolean
 }
 
 export default function RewardsClient() {
-  const [userPoints, setUserPoints] = useState(420)
-  const [isPremium, setIsPremium] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [isSignUp, setIsSignUp] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
+  const [formData, setFormData] = useState<AuthForm>({ email: '', password: '', name: '' })
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
+  const [showResetForm, setShowResetForm] = useState(false)
 
-  const rewardTiers: RewardTier[] = [
-    {
-      name: 'Bronze',
-      points: 100,
-      color: 'from-yellow-700 to-yellow-600',
-      description: 'Get started with your first rewards',
-      icon: <Gift size={24} />,
-    },
-    {
-      name: 'Silver',
-      points: 500,
-      color: 'from-gray-400 to-gray-300',
-      description: 'Unlock exclusive content',
-      icon: <Star size={24} />,
-    },
-    {
-      name: 'Gold',
-      points: 1500,
-      color: 'from-yellow-500 to-yellow-400',
-      description: 'Premium member status',
-      icon: <TrendingUp size={24} />,
-    },
-    {
-      name: 'Platinum',
-      points: 5000,
-      color: 'from-slate-400 to-slate-300',
-      description: 'VIP access & exclusive perks',
-      icon: <Zap size={24} />,
-    },
-  ]
+  // Monitor auth state
+  useEffect(() => {
+    if (!auth) {
+      setError('Firebase not initialized')
+      setLoading(false)
+      return
+    }
 
-  const engagementRewards = [
-    {
-      activity: 'Share on Social Media',
-      points: 50,
-      frequency: 'Per share',
-      icon: '📱',
-    },
-    {
-      activity: 'Write a Review',
-      points: 100,
-      frequency: 'Per review',
-      icon: '✍️',
-    },
-    {
-      activity: 'Refer a Friend',
-      points: 250,
-      frequency: 'Per referral',
-      icon: '👥',
-    },
-    {
-      activity: 'Purchase Fan Card',
-      points: 500,
-      frequency: 'Per purchase',
-      icon: '🎫',
-    },
-    {
-      activity: 'Watch a Video',
-      points: 10,
-      frequency: 'Per video',
-      icon: '🎬',
-    },
-    {
-      activity: 'Subscribe to Newsletter',
-      points: 75,
-      frequency: 'One-time',
-      icon: '📧',
-    },
-  ]
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser)
+      setLoading(false)
+    })
 
-  const premiumBenefits: PremiumBenefit[] = [
-    {
-      name: '2x Reward Points',
-      description: 'Earn double points on all activities',
-      icon: <Star className="text-jcvd-red" size={20} />,
-      available: isPremium,
-    },
-    {
-      name: 'Exclusive Discord Channel',
-      description: 'Join our VIP community',
-      icon: <Lock className="text-jcvd-teal" size={20} />,
-      available: isPremium,
-    },
-    {
-      name: 'Early Access to Merch',
-      description: 'Shop new items 48 hours early',
-      icon: <TrendingUp className="text-jcvd-red" size={20} />,
-      available: isPremium,
-    },
-    {
-      name: 'Special Discount Code',
-      description: '20% off all purchases',
-      icon: <Gift className="text-jcvd-teal" size={20} />,
-      available: isPremium,
-    },
-    {
-      name: 'Birthday Bonus',
-      description: '500 bonus points on your birthday',
-      icon: <Zap className="text-jcvd-red" size={20} />,
-      available: isPremium,
-    },
-    {
-      name: 'Priority Support',
-      description: '24/7 customer support',
-      icon: <CheckCircle className="text-jcvd-teal" size={20} />,
-      available: isPremium,
-    },
-  ]
+    return unsubscribe
+  }, [])
 
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+
+    if (!acceptedTerms) {
+      setError('Please accept the terms and conditions')
+      return
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const userCred = await createUserWithEmailAndPassword(auth!, formData.email, formData.password)
+      
+      // Update profile with name
+      if (formData.name) {
+        await updateProfile(userCred.user, { displayName: formData.name })
+      }
+
+      setSuccess('Account created successfully!')
+      setFormData({ email: '', password: '', name: '' })
+      setAcceptedTerms(false)
+      setIsSignUp(false)
+    } catch (err: any) {
+      setError(err.message || 'Failed to create account')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+    setIsSubmitting(true)
+
+    try {
+      await signInWithEmailAndPassword(auth!, formData.email, formData.password)
+      setSuccess('Logged in successfully!')
+      setFormData({ email: '', password: '', name: '' })
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign in')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+    setIsSubmitting(true)
+
+    try {
+      await sendPasswordResetEmail(auth!, resetEmail)
+      setSuccess('Password reset email sent! Check your inbox.')
+      setResetEmail('')
+      setShowResetForm(false)
+    } catch (err: any) {
+      setError(err.message || 'Failed to send reset email')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth!)
+      setUser(null)
+    } catch (err: any) {
+      setError('Failed to sign out')
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <Loader className="text-white animate-spin" size={48} />
+      </div>
+    )
+  }
+
+  // Logged In View - Rewards Dashboard
+  if (user) {
+    return (
+      <div className="min-h-screen bg-black">
+        <Header />
+
+        <main className="pt-20 sm:pt-24 pb-12">
+          <section className="px-4 sm:px-6 py-12 sm:py-16 max-w-6xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-12"
+            >
+              {/* Header with Sign Out */}
+              <div className="flex justify-between items-center mb-12">
+                <div>
+                  <h1 className="text-white text-4xl font-black tracking-widest">REWARDS</h1>
+                  <p className="text-blue-400 text-lg">Welcome, {user.displayName || user.email?.split('@')[0] || 'Member'}</p>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleSignOut}
+                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-bold transition-colors"
+                >
+                  <LogOut size={20} />
+                  SIGN OUT
+                </motion.button>
+              </div>
+
+              {/* Rewards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-gradient-to-br from-blue-600/20 to-blue-900/20 border border-blue-500/50 rounded-2xl p-6"
+                >
+                  <p className="text-blue-300 text-xs tracking-widest mb-2">YOUR POINTS</p>
+                  <h2 className="text-white text-4xl font-black">1,250</h2>
+                  <p className="text-gray-400 text-sm mt-4">Earn from purchases</p>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="bg-gradient-to-br from-purple-600/20 to-purple-900/20 border border-purple-500/50 rounded-2xl p-6"
+                >
+                  <p className="text-purple-300 text-xs tracking-widest mb-2">CURRENT TIER</p>
+                  <h2 className="text-white text-4xl font-black">GOLD</h2>
+                  <p className="text-gray-400 text-sm mt-4">550 to Platinum</p>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="bg-gradient-to-br from-green-600/20 to-green-900/20 border border-green-500/50 rounded-2xl p-6"
+                >
+                  <p className="text-green-300 text-xs tracking-widest mb-2">BENEFIT</p>
+                  <h2 className="text-white text-4xl font-black">10% OFF</h2>
+                  <p className="text-gray-400 text-sm mt-4">All purchases</p>
+                </motion.div>
+              </div>
+
+              {/* Activities */}
+              <div className="space-y-6">
+                <h3 className="text-white text-2xl font-black tracking-widest">RECENT ACTIVITY</h3>
+                <div className="space-y-3">
+                  {[
+                    { type: 'Purchase', points: '+100', desc: 'Premium Hoodie' },
+                    { type: 'Referral', points: '+50', desc: 'Invited friend' },
+                    { type: 'Review', points: '+25', desc: 'Product review' },
+                  ].map((activity, idx) => (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="bg-white/5 border border-white/10 rounded-lg p-4 flex justify-between items-center hover:bg-white/10 transition-colors"
+                    >
+                      <div>
+                        <p className="text-white font-bold">{activity.type}</p>
+                        <p className="text-gray-400 text-sm">{activity.desc}</p>
+                      </div>
+                      <p className="text-green-400 font-bold text-lg">{activity.points}</p>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </section>
+        </main>
+
+        <Footer />
+      </div>
+    )
+  }
+
+  // Login/Sign Up View
   return (
     <div className="min-h-screen bg-black">
       <Header />
 
-      <main className="pt-24">
-        {/* Hero Section */}
-        <section className="relative py-16 px-4 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-jcvd-red/10 to-transparent" />
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="relative z-10 max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-widest mb-4">
-              <span className="text-jcvd-red">REWARDS</span> PROGRAM
-            </h1>
-            <p className="text-jcvd-gray text-lg tracking-wide mb-8">Earn points for every engagement and unlock exclusive benefits</p>
+      <main className="pt-20 sm:pt-24 pb-12 px-4 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md"
+        >
+          <div className="bg-gradient-to-br from-white/10 to-white/5 border border-white/20 rounded-2xl p-8 space-y-6">
+            <div className="text-center mb-8">
+              <Lock className="w-12 h-12 text-blue-400 mx-auto mb-4" />
+              <h1 className="text-white text-3xl font-black tracking-widest mb-2">REWARDS</h1>
+              <p className="text-gray-400">Sign in or create account</p>
+            </div>
 
-            {/* Current Points Display */}
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} transition={{ duration: 0.4, delay: 0.2 }} className="inline-block">
-              <div className="bg-gradient-to-r from-jcvd-red/20 to-jcvd-teal/20 border border-jcvd-red/50 rounded-xl p-8 backdrop-blur-sm">
-                <p className="text-jcvd-gray text-sm tracking-widest mb-2">YOUR POINTS</p>
-                <h2 className="text-5xl font-bold text-white mb-4">{userPoints.toLocaleString()}</h2>
-                <div className="w-48 h-2 bg-jcvd-input rounded-full overflow-hidden mb-4">
-                  <div className="h-full bg-gradient-to-r from-jcvd-red to-jcvd-teal" style={{ width: `${Math.min((userPoints / 5000) * 100, 100)}%` }} />
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-red-900/30 border border-red-500/50 rounded-lg p-4 flex items-center gap-2"
+              >
+                <AlertCircle size={20} className="text-red-400" />
+                <p className="text-red-300 text-sm">{error}</p>
+              </motion.div>
+            )}
+
+            {success && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-green-900/30 border border-green-500/50 rounded-lg p-4 flex items-center gap-2"
+              >
+                <CheckCircle size={20} className="text-green-400" />
+                <p className="text-green-300 text-sm">{success}</p>
+              </motion.div>
+            )}
+
+            {/* Password Reset Form */}
+            <AnimatePresence>
+              {showResetForm && (
+                <motion.form
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  onSubmit={handlePasswordReset}
+                  className="space-y-4 pb-4 border-b border-white/10"
+                >
+                  <div>
+                    <label className="text-gray-400 text-sm font-bold mb-2 block">EMAIL</label>
+                    <input
+                      type="email"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      placeholder="Enter your email"
+                      className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                      required
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    >
+                      {isSubmitting ? <Loader className="animate-spin" size={20} /> : 'SEND LINK'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setShowResetForm(false); setResetEmail('') }}
+                      className="px-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-lg transition-colors"
+                    >
+                      CANCEL
+                    </button>
+                  </div>
+                </motion.form>
+              )}
+            </AnimatePresence>
+
+            {/* Auth Form */}
+            <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="space-y-4">
+              {isSignUp && (
+                <div>
+                  <label className="text-gray-400 text-sm font-bold mb-2 block">NAME</label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Your name"
+                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                    required={isSignUp}
+                  />
                 </div>
-                <p className="text-jcvd-gray text-xs tracking-wide">{5000 - userPoints} points until Platinum</p>
+              )}
+
+              <div>
+                <label className="text-gray-400 text-sm font-bold mb-2 block">EMAIL</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="your@email.com"
+                  className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-gray-400 text-sm font-bold mb-2 block">PASSWORD</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="At least 6 characters"
+                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 pr-12 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                    required
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-3.5 text-gray-500 hover:text-gray-300"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              </div>
+
+              {isSignUp && (
+                <div>
+                  <label className="flex items-center gap-2 text-gray-400 text-sm mb-3 cursor-pointer hover:text-white transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={acceptedTerms}
+                      onChange={(e) => setAcceptedTerms(e.target.checked)}
+                      className="rounded"
+                    />
+                    <span>I accept terms &amp; conditions</span>
+                  </label>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader className="animate-spin" size={20} />
+                    PROCESSING...
+                  </>
+                ) : isSignUp ? (
+                  'CREATE ACCOUNT'
+                ) : (
+                  'SIGN IN'
+                )}
+              </button>
+            </form>
+
+            {/* Toggle Sign Up/In */}
+            <div className="text-center">
+              <button
+                onClick={() => {
+                  setIsSignUp(!isSignUp)
+                  setFormData({ email: '', password: '', name: '' })
+                  setError('')
+                  setSuccess('')
+                }}
+                className="text-gray-400 hover:text-white text-sm transition-colors"
+              >
+                {isSignUp ? 'Already have an account? ' : "Don&apos;t have an account? "}
+                <span className="text-blue-400 font-bold">{isSignUp ? 'SIGN IN' : 'CREATE ONE'}</span>
+              </button>
+            </div>
+
+            {/* Password Reset Link */}
+            {!isSignUp && (
+              <button
+                onClick={() => setShowResetForm(!showResetForm)}
+                className="w-full text-center text-gray-400 hover:text-blue-400 text-sm transition-colors"
+              >
+                Forgot password?
+              </button>
+            )}
+          </div>
+        </motion.div>
+      </main>
+
+      <Footer />
+    </div>
+  )
+  }
+
+  // Authenticated View - Rewards Dashboard
+  return (
+    <div className="min-h-screen bg-black">
+      <Header />
+      
+      <main className="pt-20 sm:pt-24 pb-12">
+        {/* Welcome Section */}
+        <section className="px-4 sm:px-6 py-12 sm:py-16 max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-12"
+          >
+            {/* Header */}
+            <div className="flex justify-between items-start">
+              <div>
+                <h1 className="text-white text-3xl sm:text-4xl font-black tracking-widest mb-2">
+                  YOUR REWARDS
+                </h1>
+                <p className="text-gray-400 text-sm sm:text-base">Welcome back! Track your points and unlock exclusive benefits.</p>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsAuthenticated(false)}
+                className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-bold"
+              >
+                SIGN OUT
+              </motion.button>
+            </div>
+
+            {/* Points Card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 }}
+              className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-800/50 rounded-2xl p-6 sm:p-8"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div>
+                  <p className="text-gray-400 text-xs sm:text-sm tracking-widest mb-2">CURRENT POINTS</p>
+                  <p className="text-white text-4xl sm:text-5xl font-black">{userPoints}</p>
+                </div>
+                <div>
+                  <p className="text-gray-400 text-xs sm:text-sm tracking-widest mb-2">NEXT TIER</p>
+                  <p className="text-blue-400 text-3xl font-bold">Silver</p>
+                  <p className="text-gray-500 text-xs mt-1">{500 - userPoints} points to go</p>
+                </div>
+                <div>
+                  <p className="text-gray-400 text-xs sm:text-sm tracking-widest mb-2">STATUS</p>
+                  <p className="text-yellow-400 text-2xl font-black">Bronze Member</p>
+                </div>
               </div>
             </motion.div>
-          </motion.div>
-        </section>
 
-        {/* Reward Tiers */}
-        <section className="py-16 px-4">
-          <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 0.5 }} viewport={{ once: true }} className="text-3xl font-bold tracking-widest text-center mb-12">
-            TIER LEVELS
-          </motion.h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto">
-            {rewardTiers.map((tier, index) => (
-              <motion.div
-                key={tier.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className={`relative p-6 rounded-xl border transition-all ${userPoints >= tier.points ? 'border-jcvd-red bg-jcvd-red/10 scale-105' : 'border-jcvd-border bg-jcvd-dark/50'}`}
-              >
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-3 bg-gradient-to-br ${tier.color}`}>
-                  {tier.icon}
-                </div>
-                <h3 className="text-xl font-bold mb-1">{tier.name}</h3>
-                <p className="text-jcvd-teal font-bold text-sm mb-3">{tier.points.toLocaleString()} pts</p>
-                <p className="text-jcvd-gray text-xs leading-relaxed">{tier.description}</p>
-                {userPoints >= tier.points && <div className="absolute top-2 right-2 text-jcvd-red">✓</div>}
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        {/* Engagement Rewards */}
-        <section className="py-16 px-4 bg-jcvd-dark/30">
-          <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 0.5 }} viewport={{ once: true }} className="text-3xl font-bold tracking-widest text-center mb-12">
-            EARN POINTS
-          </motion.h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {engagementRewards.map((reward, index) => (
-              <motion.div
-                key={reward.activity}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="flex items-start gap-4 p-6 bg-black/50 border border-jcvd-border rounded-lg hover:border-jcvd-red/50 hover:bg-jcvd-red/5 transition-all"
-              >
-                <span className="text-4xl flex-shrink-0">{reward.icon}</span>
-                <div className="flex-1">
-                  <h3 className="font-bold tracking-wide mb-1">{reward.activity}</h3>
-                  <p className="text-jcvd-gray text-sm mb-2">{reward.frequency}</p>
-                  <p className="text-jcvd-teal font-bold">{reward.points} points</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        {/* Premium Membership Section */}
-        <section className="py-16 px-4">
-          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 0.5 }} viewport={{ once: true }} className="max-w-4xl mx-auto">
-            <div className="bg-gradient-to-r from-jcvd-red/20 to-jcvd-teal/20 border-2 border-jcvd-red/50 rounded-2xl p-8 md:p-12">
-              <div className="text-center mb-8">
-                <h2 className="text-4xl font-bold tracking-widest mb-2">
-                  <span className="text-jcvd-red">PREMIUM</span> MEMBERSHIP
-                </h2>
-                <p className="text-jcvd-gray tracking-wide">Unlock exclusive perks and earn rewards faster</p>
+            {/* Reward Tiers */}
+            <div>
+              <h2 className="text-white text-2xl sm:text-3xl font-black tracking-widest mb-6">REWARD TIERS</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                {rewardTiers.map((tier, i) => (
+                  <motion.div
+                    key={tier.name}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.05 }}
+                    className={`bg-gradient-to-br ${tier.color} rounded-lg p-4 sm:p-6 text-black ${
+                      userPoints >= tier.points ? 'ring-2 ring-white' : 'opacity-50'
+                    }`}
+                  >
+                    <div className="text-3xl mb-2">{tier.icon}</div>
+                    <h3 className="font-black text-lg sm:text-xl tracking-widest mb-2">{tier.name}</h3>
+                    <p className="text-xs sm:text-sm mb-3 opacity-80">{tier.description}</p>
+                    <p className="font-bold text-sm">{tier.points} Points</p>
+                  </motion.div>
+                ))}
               </div>
-
-              {!isPremium ? (
-                <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ duration: 0.3 }} className="text-center mb-8">
-                  <div className="flex items-baseline justify-center gap-2 mb-6">
-                    <span className="text-5xl font-bold">$9.99</span>
-                    <span className="text-jcvd-gray">/month</span>
-                  </div>
-                  <button
-                    onClick={() => setIsPremium(true)}
-                    className="bg-jcvd-red hover:bg-red-700 text-white font-bold text-lg px-12 py-3 tracking-widest transition-colors"
-                  >
-                    UPGRADE NOW
-                  </button>
-                </motion.div>
-              ) : (
-                <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ duration: 0.3 }} className="text-center mb-8">
-                  <p className="text-jcvd-teal text-xl font-bold mb-4">✓ PREMIUM MEMBER</p>
-                  <button
-                    onClick={() => setIsPremium(false)}
-                    className="bg-jcvd-teal hover:bg-opacity-70 text-black font-bold text-lg px-12 py-3 tracking-widest transition-colors"
-                  >
-                    MANAGE SUBSCRIPTION
-                  </button>
-                </motion.div>
-              )}
             </div>
-          </motion.div>
-        </section>
 
-        {/* Premium Benefits Grid */}
-        <section className="py-16 px-4 bg-jcvd-dark/30">
-          <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 0.5 }} viewport={{ once: true }} className="text-3xl font-bold tracking-widest text-center mb-12">
-            VIP BENEFITS
-          </motion.h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {premiumBenefits.map((benefit, index) => (
-              <motion.div
-                key={benefit.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className={`p-6 rounded-xl border transition-all ${
-                  isPremium ? 'border-jcvd-red/50 bg-jcvd-red/5 hover:bg-jcvd-red/10' : 'border-jcvd-border/30 bg-black/50 opacity-70'
-                }`}
-              >
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="p-2 bg-black/50 rounded-lg">{benefit.icon}</div>
-                  <h3 className="font-bold tracking-wide">{benefit.name}</h3>
-                </div>
-                <p className="text-jcvd-gray text-sm">{benefit.description}</p>
-                {!isPremium && <p className="text-jcvd-gray text-xs mt-3">Unlock with Premium →</p>}
-              </motion.div>
-            ))}
-          </div>
-        </section>
+            {/* Engagement Rewards */}
+            <div>
+              <h2 className="text-white text-2xl sm:text-3xl font-black tracking-widest mb-6">EARN POINTS</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                {engagementRewards.map((reward, i) => (
+                  <motion.div
+                    key={reward.activity}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.05 }}
+                    className="bg-white/5 border border-white/10 rounded-lg p-4 sm:p-6 flex items-start gap-4"
+                  >
+                    <div className="text-4xl">{reward.icon}</div>
+                    <div className="flex-1">
+                      <h3 className="text-white font-bold text-sm sm:text-base">{reward.activity}</h3>
+                      <p className="text-gray-400 text-xs sm:text-sm">{reward.frequency}</p>
+                      <p className="text-blue-400 font-bold text-sm mt-2">+{reward.points} PTS</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
 
-        {/* How It Works */}
-        <section className="py-16 px-4">
-          <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 0.5 }} viewport={{ once: true }} className="text-3xl font-bold tracking-widest text-center mb-12">
-            HOW IT WORKS
-          </motion.h2>
-          <div className="max-w-3xl mx-auto">
-            {[
-              { step: '01', title: 'Engage', desc: 'Participate in activities to earn points' },
-              { step: '02', title: 'Accumulate', desc: 'Build up your points to reach tiers' },
-              { step: '03', title: 'Unlock', desc: 'Access exclusive perks at each tier' },
-              { step: '04', title: 'Enjoy', desc: 'Redeem rewards and exclusive benefits' },
-            ].map((item, index) => (
-              <motion.div
-                key={item.step}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="flex gap-6 mb-8 items-start"
-              >
-                <div className="flex-shrink-0">
-                  <div className="flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-br from-jcvd-red to-jcvd-teal">
-                    <span className="text-white font-black text-xl tracking-wider">{item.step}</span>
-                  </div>
-                </div>
-                <div className="pt-2">
-                  <h3 className="text-xl font-bold tracking-wide mb-2">{item.title}</h3>
-                  <p className="text-jcvd-gray">{item.desc}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="py-16 px-4 bg-gradient-to-t from-jcvd-red/10 to-transparent">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} viewport={{ once: true }} className="text-center max-w-2xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-widest mb-6">READY TO EARN?</h2>
-            <p className="text-jcvd-gray text-lg mb-8 tracking-wide">Start engaging with the community and unlock amazing rewards today!</p>
-            <button className="bg-jcvd-red hover:bg-red-700 text-white font-bold text-lg px-12 py-4 tracking-widest transition-colors mb-6">
-              CLAIM YOUR FIRST REWARD
-            </button>
-            <p className="text-jcvd-gray text-sm">Questions? <a href="/contact" className="text-jcvd-teal hover:text-white transition-colors">Contact us</a></p>
+            {/* Premium Benefits */}
+            <div>
+              <h2 className="text-white text-2xl sm:text-3xl font-black tracking-widest mb-6">PREMIUM BENEFITS</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                {premiumBenefits.map((benefit, i) => (
+                  <motion.div
+                    key={benefit.name}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.05 }}
+                    className="bg-white/5 border border-white/10 rounded-lg p-4 sm:p-6"
+                  >
+                    <div className={`flex items-center gap-3 mb-3 ${benefit.available ? 'text-blue-400' : 'text-gray-600'}`}>
+                      {benefit.icon}
+                      <h3 className="text-white font-bold text-sm sm:text-base">{benefit.name}</h3>
+                    </div>
+                    <p className="text-gray-400 text-xs sm:text-sm">{benefit.description}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
           </motion.div>
         </section>
       </main>

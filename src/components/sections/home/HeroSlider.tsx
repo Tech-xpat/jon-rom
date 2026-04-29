@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import Image from 'next/image'
 
 interface Slide {
   id: number
@@ -43,12 +42,10 @@ export default function HeroSlider({ slides = defaultSlides }: { slides?: Slide[
           transition={{ duration: 0.5 }}
           className="absolute inset-0"
         >
-          <Image
+          <img
             src={slides[currentSlide].image}
             alt={slides[currentSlide].title}
-            fill
-            className="object-cover"
-            priority={currentSlide === 0}
+            className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
