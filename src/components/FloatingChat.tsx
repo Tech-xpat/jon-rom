@@ -2,30 +2,54 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageCircle, X, Send } from 'lucide-react'
+import { MessageCircle, X, Send, Loader, LogOut } from 'lucide-react'
 
 interface Message {
   id: string
-  type: 'user' | 'bot'
+  type: 'user' | 'bot' | 'system'
   text: string
   timestamp: Date
 }
 
-const quickReplies = [
-  'How do I purchase?',
-  'Where is my order?',
-  'Payment methods?',
-  'Fan card help',
-  'General inquiry',
-]
+const WHATSAPP_NUMBER = '1234567890' // Admin to update this
 
-const botResponses: { [key: string]: string } = {
-  'how do i purchase?': 'You can purchase items from our shop! Simply add items to your cart, provide your delivery details, and choose your payment method (Crypto, Cash App, or Venmo).',
-  'where is my order?': 'Orders are confirmed via email after payment. You can track your order status in your confirmation email. Contact admin for specific order details.',
-  'payment methods?': 'We accept: Bitcoin & USDT (Crypto), Cash App ($tinabeingblessed), and Venmo (Tina-McGowan-17).',
-  'fan card help': 'Create your fan card instantly on the Fan Card page! Just tap the card, enter your name, and download your personalized card.',
-  'general inquiry': 'How can we help you today? Feel free to ask any questions about our products, services, or anything else!',
-  'default': 'Thank you for reaching out! Our admin team will review your message. For urgent inquiries, please specify your issue clearly. Have a great day!',
+const siteKnowledge = {
+  shop: {
+    keywords: ['shop', 'product', 'buy', 'purchase', 'merchandise', 'apparel', 'store', 'item'],
+    response: 'Our shop features 13 exclusive products including premium t-shirts, signature hoodies, and limited edition merchandise. All prices are updated in real-time! Prices range from $26.99 to $69.99. What are you looking for?'
+  },
+  fancard: {
+    keywords: ['fan card', 'card', 'personalize', 'customize', 'create card'],
+    response: 'The Fan Card page lets you create a personalized card instantly! Just enter your name and watch it appear on the card in real-time. Price updates automatically, and you can copy or download your card. No signup needed!'
+  },
+  rewards: {
+    keywords: ['reward', 'points', 'tier', 'bronze', 'silver', 'gold', 'platinum', 'member'],
+    response: 'Our rewards program offers points for purchases, referrals, social shares, and reviews. Bronze, Silver, Gold, and Platinum tiers unlock exclusive benefits. You need to sign in with email and password to access the rewards dashboard.'
+  },
+  payment: {
+    keywords: ['payment', 'pay', 'cash app', 'venmo', 'crypto', 'btc', 'usdt', 'bitcoin'],
+    response: 'We accept multiple payment methods:\n• Cash App: $tinabeingblessed\n• Venmo: Tina-McGowan-17\n• Crypto: BTC or USDT (wallet address provided at checkout)'
+  },
+  orders: {
+    keywords: ['order', 'track', 'status', 'delivery', 'shipping', 'confirmation'],
+    response: 'All orders require you to provide your email, phone, and address. After payment, you\'ll receive an email confirmation. Admin tracks all orders in real-time. Contact support for specific order details.'
+  },
+  pricing: {
+    keywords: ['price', 'cost', 'how much', 'expensive', 'discount', 'sale'],
+    response: 'Shop products range from $26.99 to $69.99. Fan card pricing updates in real-time on the fan card page. Check individual product pages for current prices.'
+  },
+  gallery: {
+    keywords: ['gallery', 'photo', 'image', 'picture'],
+    response: 'Our gallery showcases beautiful moments! You can browse our collection on the home page with smooth animations and high-quality images.'
+  },
+  news: {
+    keywords: ['news', 'update', 'announcement', 'latest'],
+    response: 'Check our Latest News section for the newest updates about Jonathan Roumie! We post regular announcements and exciting updates.'
+  },
+  contact: {
+    keywords: ['contact', 'help', 'support', 'agent', 'human', 'whatsapp'],
+    response: 'Our admin team is always online! You can connect directly via WhatsApp for instant support. Let me know if you want to talk to a human agent!'
+  }
 }
 
 export default function FloatingChat() {
@@ -34,20 +58,20 @@ export default function FloatingChat() {
     {
       id: '1',
       type: 'bot',
-      text: 'Hi there! How can we help you today?',
+      text: 'Hi! 👋 Welcome to Jonathan Roumie\'s official support. I can help with questions about our Shop, Fan Cards, Rewards, Payments, Orders, and more. What can I help you with?',
       timestamp: new Date(),
     },
   ])
   const [inputValue, setInputValue] = useState('')
   const [scrollY, setScrollY] = useState(0)
-  const [isVisible, setIsVisible] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
+  const [showHumanOption, setShowHumanOption] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Animate button based on scroll
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY)
-      setIsVisible(window.scrollY < window.innerHeight * 2)
     }
 
     window.addEventListener('scroll', handleScroll)
@@ -59,7 +83,25 @@ export default function FloatingChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const handleSendMessage = (text?: string) => {
+  // Intelligent bot response generator
+  const generateBotResponse = (userMessage: string): string => {
+    const lowerMessage = userMessage.toLowerCase()
+    
+    // Check each knowledge category
+    for (const [category, data] of Object.entries(siteKnowledge)) {
+      const keywords = data.keywords as string[]
+      if (keywords.some(keyword => lowerMessage.includes(keyword))) {
+        setShowHumanOption(category === 'contact')
+        return (data as any).response
+      }
+    }
+
+    // Default response if no keywords match
+    setShowHumanOption(true)
+    return 'I couldn\'t find a specific answer to that. Would you like to speak with our human support team? They\'re always online on WhatsApp and can help with anything!'
+  }
+
+  const handleSendMessage = async (text?: string) => {
     const messageText = text || inputValue.trim()
     
     if (!messageText) return
@@ -73,22 +115,44 @@ export default function FloatingChat() {
     }
     setMessages((prev) => [...prev, userMessage])
     setInputValue('')
+    setIsLoading(true)
+    setShowHumanOption(false)
 
-    // Simulate bot response after a delay
+    // Simulate bot thinking
     setTimeout(() => {
-      const lowerText = messageText.toLowerCase()
-      const botResponse = Object.keys(botResponses).find((key) =>
-        lowerText.includes(key)
-      )
-
-      const botMessage: Message = {
+      const botResponse: Message = {
         id: (Date.now() + 1).toString(),
         type: 'bot',
-        text: botResponse ? botResponses[botResponse] : botResponses['default'],
+        text: generateBotResponse(messageText),
         timestamp: new Date(),
       }
-      setMessages((prev) => [...prev, botMessage])
-    }, 600)
+      setMessages((prev) => [...prev, botResponse])
+      setIsLoading(false)
+    }, 500)
+  }
+
+  const handleConnectWhatsApp = () => {
+    const systemMessage: Message = {
+      id: Date.now().toString(),
+      type: 'system',
+      text: 'Connecting to WhatsApp support...',
+      timestamp: new Date(),
+    }
+    setMessages((prev) => [...prev, systemMessage])
+
+    setTimeout(() => {
+      const message = encodeURIComponent('Hi! I need support from the Jonathan Roumie team.')
+      const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`
+      window.open(whatsappUrl, '_blank')
+
+      const confirmMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        type: 'bot',
+        text: 'WhatsApp opened! Our admin is always online and will respond right away. Thank you for reaching out!',
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, confirmMessage])
+    }, 800)
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -98,119 +162,132 @@ export default function FloatingChat() {
     }
   }
 
+  // Animate chat button based on scroll
+  const chatButtonY = Math.min(scrollY * 0.3, 100)
+
   return (
-    <AnimatePresence>
-      {/* Chat Button */}
+    <>
+      {/* Floating Chat Button */}
       <motion.button
-        initial={{ opacity: 0, scale: 0.8, y: 20 }}
-        animate={{
-          opacity: isVisible ? 1 : 0,
-          scale: isVisible ? 1 : 0.8,
-          y: isVisible ? 0 : 20,
-        }}
-        exit={{ opacity: 0, scale: 0.8, y: 20 }}
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
-        onClick={() => setIsOpen(true)}
-        disabled={isOpen}
-        className="fixed bottom-6 right-4 sm:bottom-8 sm:right-6 z-40 w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg flex items-center justify-center text-white disabled:opacity-0 transition-all"
-        style={{
-          pointerEvents: isOpen ? 'none' : 'auto',
-        }}
+        style={{ y: chatButtonY }}
+        onClick={() => setIsOpen(!isOpen)}
+        className="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white p-4 rounded-full shadow-lg flex items-center justify-center transition-all"
+        aria-label="Open chat"
       >
-        <motion.div
-          animate={{ rotate: isOpen ? 0 : [0, 10, -10, 0] }}
-          transition={{ repeat: isOpen ? 0 : Infinity, duration: 2 }}
-        >
-          <MessageCircle size={24} />
-        </motion.div>
+        {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
+        {!isOpen && (
+          <motion.span
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ repeat: Infinity, duration: 2 }}
+            className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full"
+          />
+        )}
       </motion.button>
 
       {/* Chat Window */}
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="fixed bottom-6 right-4 sm:bottom-8 sm:right-6 z-50 w-full max-w-sm sm:max-w-md h-96 sm:h-[500px] bg-gradient-to-b from-gray-900 to-black rounded-2xl shadow-2xl flex flex-col border border-white/10 overflow-hidden"
-        >
-          {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-4 sm:px-6 py-4 flex items-center justify-between">
-            <div>
-              <h3 className="text-white font-bold text-sm sm:text-base tracking-widest">SUPPORT</h3>
-              <p className="text-blue-100 text-xs">We&apos;re here to help!</p>
-            </div>
-            <motion.button
-              whileHover={{ rotate: 90 }}
-              onClick={() => setIsOpen(false)}
-              className="text-white hover:bg-white/20 p-2 rounded-full transition-colors"
-            >
-              <X size={20} />
-            </motion.button>
-          </div>
-
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4 bg-black/30">
-            {messages.map((msg) => (
-              <motion.div
-                key={msg.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            transition={{ type: 'spring', damping: 20 }}
+            className="fixed bottom-20 right-6 z-40 w-full max-w-sm bg-black border border-white/20 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+            style={{ maxHeight: '600px' }}
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 flex justify-between items-center">
+              <div>
+                <h3 className="text-white font-bold text-sm tracking-widest">SUPPORT</h3>
+                <p className="text-blue-100 text-xs">Admin online 24/7</p>
+              </div>
+              <motion.button
+                whileHover={{ rotate: 90 }}
+                onClick={() => setIsOpen(false)}
+                className="text-white hover:bg-white/20 p-2 rounded-full transition-colors"
               >
-                <div
-                  className={`max-w-xs px-4 py-2 sm:py-3 rounded-lg text-xs sm:text-sm ${
-                    msg.type === 'user'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white/10 text-gray-100'
-                  }`}
-                >
-                  {msg.text}
-                </div>
-              </motion.div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
+                <X size={20} />
+              </motion.button>
+            </div>
 
-          {/* Quick Replies */}
-          <div className="px-4 sm:px-6 py-3 space-y-2 border-t border-white/10 bg-black/20">
-            <p className="text-gray-400 text-xs font-bold tracking-widest">QUICK OPTIONS:</p>
-            <div className="flex flex-wrap gap-2">
-              {quickReplies.map((reply, idx) => (
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-black/50">
+              {messages.map((msg) => (
+                <motion.div
+                  key={msg.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-xs px-4 py-2 rounded-lg text-sm ${
+                      msg.type === 'user'
+                        ? 'bg-blue-600 text-white'
+                        : msg.type === 'system'
+                        ? 'bg-gray-700/50 text-gray-300 italic text-xs'
+                        : 'bg-white/10 text-gray-100'
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+                </motion.div>
+              ))}
+
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-white/10 text-gray-100 px-4 py-2 rounded-lg flex items-center gap-2">
+                    <Loader size={16} className="animate-spin" />
+                    <span className="text-sm">Thinking...</span>
+                  </div>
+                </div>
+              )}
+
+              {showHumanOption && !isLoading && (
                 <motion.button
-                  key={idx}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleConnectWhatsApp}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-colors"
+                >
+                  <LogOut size={16} />
+                  TALK TO HUMAN AGENT
+                </motion.button>
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input */}
+            <div className="border-t border-white/10 p-4 bg-black/50">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Ask me anything..."
+                  className="flex-1 bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm"
+                />
+                <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => handleSendMessage(reply)}
-                  className="text-xs px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 transition-colors whitespace-nowrap"
+                  onClick={() => handleSendMessage()}
+                  disabled={!inputValue.trim() || isLoading}
+                  className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg disabled:opacity-50 transition-colors"
                 >
-                  {reply}
+                  <Send size={20} />
                 </motion.button>
-              ))}
+              </div>
             </div>
-          </div>
-
-          {/* Input */}
-          <div className="px-4 sm:px-6 py-3 border-t border-white/10 flex gap-2 bg-black/40">
-            <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Type message..."
-              className="flex-1 bg-white/5 border border-white/10 text-white text-sm px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 transition-colors placeholder-gray-500"
-            />
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleSendMessage()}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors flex items-center gap-1"
-            >
-              <Send size={16} />
-            </motion.button>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   )
 }

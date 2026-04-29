@@ -13,6 +13,7 @@ interface HeaderProps {
 const navLinks = [
   { name: 'HOME', path: '/' },
   { name: 'SHOP', path: '/shop' },
+  { name: 'FAN CARD', path: '/fan-card' },
   { name: 'REWARDS', path: '/rewards' },
   { name: 'CONTACT', path: '/contact' },
 ]

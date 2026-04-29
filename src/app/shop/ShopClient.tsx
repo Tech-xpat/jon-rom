@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ShoppingCart, X, Heart, Loader2 } from 'lucide-react'
 import Image from 'next/image'
@@ -16,7 +16,7 @@ interface Product {
   description: string
 }
 
-const products: Product[] = [
+const productDefaults: Product[] = [
   { id: 1, image: '/images/shop/WhatsApp Image 2026-04-23 at 19.13.27.jpeg', name: 'Premium T-Shirt Black', price: 29.99, stock: 45, description: 'Exclusive Jonathan Roumie Collection' },
   { id: 2, image: '/images/shop/WhatsApp Image 2026-04-23 at 19.13.27 (1).jpeg', name: 'Premium T-Shirt White', price: 29.99, stock: 38, description: 'Classic Design' },
   { id: 3, image: '/images/shop/WhatsApp Image 2026-04-23 at 19.13.28.jpeg', name: 'Signature Hoodie', price: 59.99, stock: 22, description: 'Comfortable & Premium Quality' },
@@ -39,12 +39,36 @@ interface CartItem extends Product {
 type CheckoutStep = 'cart' | 'customer' | 'payment' | 'confirmation' | 'loader'
 
 export default function ShopClient() {
+  const [products, setProducts] = useState<Product[]>(productDefaults)
   const [cart, setCart] = useState<CartItem[]>([])
   const [wishlist, setWishlist] = useState<number[]>([])
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [checkoutStep, setCheckoutStep] = useState<CheckoutStep>('cart')
   const [selectedQuantity, setSelectedQuantity] = useState<{ [key: number]: number }>({})
   const [isLoading, setIsLoading] = useState(false)
+
+  // Fetch real-time product prices
+  useEffect(() => {
+    const fetchPrices = async () => {
+      try {
+        const res = await fetch('/api/pricing?type=products')
+        const pricingData = await res.json()
+        
+        setProducts(productDefaults.map(product => ({
+          ...product,
+          price: pricingData[product.id]?.price || product.price
+        })))
+      } catch (error) {
+        console.error('Failed to fetch product prices:', error)
+      }
+    }
+
+    fetchPrices()
+    
+    // Poll for price updates every 5 seconds
+    const interval = setInterval(fetchPrices, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
   // Customer details state
   const [customerDetails, setCustomerDetails] = useState({
