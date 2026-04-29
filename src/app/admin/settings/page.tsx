@@ -7,7 +7,7 @@ import { useAdminAuth } from '@/components/admin/AdminAuthProvider'
 import AdminHeader from '@/components/admin/AdminHeader'
 
 export default function AdminSettingsPage() {
-  const { isAuthenticated } = useAdminAuth()
+  const { isAdmin } = useAdminAuth()
   const [settings, setSettings] = useState({
     whatsappNumber: '1234567890',
     adminEmail: 'admin@example.com',
@@ -16,7 +16,7 @@ export default function AdminSettingsPage() {
   })
   const [saved, setSaved] = useState(false)
 
-  if (!isAuthenticated) {
+  if (!isAdmin) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <p className="text-white">Admin access required</p>

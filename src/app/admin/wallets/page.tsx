@@ -16,7 +16,7 @@ interface Wallet {
 }
 
 export default function WalletsPage() {
-  const { isAuthenticated } = useAdminAuth()
+  const { isAdmin } = useAdminAuth()
   const [wallets, setWallets] = useState<Wallet[]>([
     {
       id: '1',
@@ -56,7 +56,7 @@ export default function WalletsPage() {
   const [editValue, setEditValue] = useState('')
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
-  if (!isAuthenticated) {
+  if (!isAdmin) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <p className="text-white">Admin access required</p>
