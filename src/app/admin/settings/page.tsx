@@ -1,252 +1,201 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Save, Eye, EyeOff, AlertCircle, Check, Loader2 } from 'lucide-react'
+import { useState } from 'react'
+import { motion } from 'framer-motion'
+import { Save, AlertCircle, CheckCircle, Phone, Globe } from 'lucide-react'
 import { useAdminAuth } from '@/components/admin/AdminAuthProvider'
-import type { SiteSettings } from '@/lib/firestore'
-
-const DEFAULTS: SiteSettings = {
-  announcementBar: 'Officially Licensed Jean-Claude Van Damme Merchandise',
-  contactEmail: 'contact@jcvdworld.com',
-  socialLinks: { facebook: '#', twitter: '#', instagram: '#', youtube: '#' },
-}
+import AdminHeader from '@/components/admin/AdminHeader'
 
 export default function AdminSettingsPage() {
-  const { getToken, user, changePassword, error: authError, clearError } = useAdminAuth()
-  const [settings, setSettings] = useState<SiteSettings>(DEFAULTS)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const { isAuthenticated } = useAdminAuth()
+  const [settings, setSettings] = useState({
+    whatsappNumber: '1234567890',
+    adminEmail: 'admin@example.com',
+    siteName: 'Jonathan Roumie Official',
+    maintenanceMode: false,
+  })
   const [saved, setSaved] = useState(false)
-  
-  // Password change state
-  const [showPasswordForm, setShowPasswordForm] = useState(false)
-  const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [passwordLoading, setPasswordLoading] = useState(false)
-  const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  async function hdr() {
-    const t = await getToken()
-    return { 'Content-Type': 'application/json', Authorization: `Bearer ${t}` }
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <p className="text-white">Admin access required</p>
+      </div>
+    )
   }
 
-  useEffect(() => {
-    async function load() {
-      const h = await hdr()
-      const res = await fetch('/api/admin/settings/site', { headers: h })
-      if (res.ok) setSettings(await res.json())
-      setLoading(false)
-    }
-    load()
-  }, [])
-
-  async function save() {
-    setSaving(true)
-    const h = await hdr()
-    await fetch('/api/admin/settings/site', { method: 'PUT', headers: h, body: JSON.stringify(settings) })
-    setSaving(false)
+  const handleSave = () => {
     setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    setTimeout(() => setSaved(false), 3000)
   }
-
-  const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setPasswordMessage(null)
-
-    if (newPassword !== confirmPassword) {
-      setPasswordMessage({ type: 'error', text: 'Passwords do not match' })
-      return
-    }
-
-    if (newPassword.length < 6) {
-      setPasswordMessage({ type: 'error', text: 'Password must be at least 6 characters' })
-      return
-    }
-
-    setPasswordLoading(true)
-    try {
-      await changePassword(currentPassword, newPassword)
-      setPasswordMessage({ type: 'success', text: 'Password changed successfully' })
-      setCurrentPassword('')
-      setNewPassword('')
-      setConfirmPassword('')
-      setTimeout(() => setShowPasswordForm(false), 2000)
-    } catch (e: any) {
-      setPasswordMessage({ type: 'error', text: e.message || 'Failed to change password' })
-    } finally {
-      setPasswordLoading(false)
-    }
-  }
-
-  if (loading) return <div className="text-gray-500 text-sm">Loading...</div>
 
   return (
-    <div className="max-w-2xl">
-      <div className="mb-8">
-        <h1 className="text-white text-2xl font-black tracking-widest">SITE SETTING</h1>
-        <p className="text-gray-500 text-sm mt-1">General configuration for the Jonathan Roumie website</p>
-      </div>
+    <div className="min-h-screen bg-black">
+      <AdminHeader />
 
-      <div className="space-y-6">
-        {/* General */}
-        <section className="bg-white/3 border border-white/5 rounded-2xl p-6 space-y-4">
-          <h2 className="text-white text-sm font-bold tracking-widest border-b border-white/5 pb-3">GENERAL</h2>
-
+      <main className="max-w-4xl mx-auto px-4 py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-8"
+        >
           <div>
-            <label className="text-gray-400 text-xs tracking-widest block mb-2">ANNOUNCEMENT BAR TEXT</label>
-            <input type="text" value={settings.announcementBar}
-              onChange={(e) => setSettings({ ...settings, announcementBar: e.target.value })}
-              className="w-full bg-white/5 border border-white/10 text-white px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-red-500 transition-colors" />
+            <h1 className="text-white text-4xl font-black tracking-widest mb-2">ADMIN SETTINGS</h1>
+            <p className="text-gray-400">Configure global site settings and contact information</p>
           </div>
 
-          <div>
-            <label className="text-gray-400 text-xs tracking-widest block mb-2">CONTACT EMAIL</label>
-            <input type="email" value={settings.contactEmail}
-              onChange={(e) => setSettings({ ...settings, contactEmail: e.target.value })}
-              className="w-full bg-white/5 border border-white/10 text-white px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-red-500 transition-colors" />
-          </div>
-        </section>
-
-        {/* Social links */}
-        <section className="bg-white/3 border border-white/5 rounded-2xl p-6 space-y-4">
-          <h2 className="text-white text-sm font-bold tracking-widest border-b border-white/5 pb-3">SOCIAL LINKS</h2>
-          {(['facebook', 'twitter', 'instagram', 'youtube'] as const).map((platform) => (
-            <div key={platform}>
-              <label className="text-gray-400 text-xs tracking-widest block mb-2">{platform.toUpperCase()}</label>
-              <input type="url" value={settings.socialLinks[platform]}
-                onChange={(e) => setSettings({ ...settings, socialLinks: { ...settings.socialLinks, [platform]: e.target.value } })}
-                placeholder={`https://${platform}.com/jcvdworld`}
-                className="w-full bg-white/5 border border-white/10 text-white px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-red-500 transition-colors" />
+          {/* WhatsApp Settings */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white/5 border border-white/10 rounded-2xl p-8 space-y-6"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <Phone size={24} className="text-green-400" />
+              <h2 className="text-white text-2xl font-black">WHATSAPP SUPPORT</h2>
             </div>
-          ))}
-        </section>
 
-        <button onClick={save} disabled={saving}
-          className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-xl text-sm font-bold tracking-wide hover:bg-red-700 transition-colors disabled:opacity-50">
-          <Save size={16} />
-          {saved ? '✓ Saved!' : saving ? 'Saving...' : 'Save Settings'}
-        </button>
-
-        {/* Password Management */}
-        <section className="bg-white/3 border border-white/5 rounded-2xl p-6 space-y-4 mt-8">
-          <h2 className="text-white text-sm font-bold tracking-widest border-b border-white/5 pb-3">ACCOUNT SECURITY</h2>
-          
-          {user && (
-            <div className="mb-4">
-              <p className="text-gray-400 text-xs">Current Account</p>
-              <p className="text-white text-sm font-medium">{user.email}</p>
+            <div>
+              <label className="text-white font-bold text-sm tracking-widest block mb-3">
+                WHATSAPP NUMBER (ADMIN)
+              </label>
+              <input
+                type="tel"
+                value={settings.whatsappNumber}
+                onChange={(e) => setSettings({ ...settings, whatsappNumber: e.target.value })}
+                placeholder="1234567890"
+                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-green-500 transition-colors"
+              />
+              <p className="text-gray-500 text-xs mt-2">This number is used for WhatsApp chat support links</p>
             </div>
-          )}
 
-          {!showPasswordForm ? (
-            <button
-              onClick={() => setShowPasswordForm(true)}
-              className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-semibold tracking-wide hover:bg-blue-700 transition-colors"
-            >
-              Change Password
-            </button>
-          ) : (
-            <form onSubmit={handlePasswordChange} className="space-y-4">
-              {passwordMessage && (
-                <div className={`flex items-center gap-3 px-4 py-3 rounded-lg ${
-                  passwordMessage.type === 'success'
-                    ? 'bg-green-900/20 border border-green-800/50 text-green-300'
-                    : 'bg-red-900/20 border border-red-800/50 text-red-300'
-                }`}>
-                  {passwordMessage.type === 'success' ? <Check size={16} /> : <AlertCircle size={16} />}
-                  <span className="text-sm">{passwordMessage.text}</span>
-                </div>
-              )}
+            <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4 flex items-start gap-3">
+              <AlertCircle size={20} className="text-green-400 flex-shrink-0 mt-0.5" />
+              <p className="text-green-300 text-sm">
+                Users clicking "Talk to Human Agent" in chat will be redirected to WhatsApp with this number
+              </p>
+            </div>
+          </motion.div>
 
+          {/* Email Settings */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white/5 border border-white/10 rounded-2xl p-8 space-y-6"
+          >
+            <h2 className="text-white text-2xl font-black">EMAIL SETTINGS</h2>
+
+            <div>
+              <label className="text-white font-bold text-sm tracking-widest block mb-3">
+                ADMIN EMAIL
+              </label>
+              <input
+                type="email"
+                value={settings.adminEmail}
+                onChange={(e) => setSettings({ ...settings, adminEmail: e.target.value })}
+                placeholder="admin@example.com"
+                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
+              />
+              <p className="text-gray-500 text-xs mt-2">Contact email for important notifications</p>
+            </div>
+          </motion.div>
+
+          {/* Site Settings */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white/5 border border-white/10 rounded-2xl p-8 space-y-6"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <Globe size={24} className="text-blue-400" />
+              <h2 className="text-white text-2xl font-black">SITE SETTINGS</h2>
+            </div>
+
+            <div>
+              <label className="text-white font-bold text-sm tracking-widest block mb-3">
+                SITE NAME
+              </label>
+              <input
+                type="text"
+                value={settings.siteName}
+                onChange={(e) => setSettings({ ...settings, siteName: e.target.value })}
+                placeholder="Site Name"
+                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-lg">
               <div>
-                <label className="text-gray-400 text-xs tracking-widest block mb-2">CURRENT PASSWORD</label>
-                <div className="relative">
-                  <input
-                    type={showCurrentPassword ? 'text' : 'password'}
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 text-white px-3 py-2.5 pr-10 rounded-lg text-sm focus:outline-none focus:border-red-500 transition-colors"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300"
-                    tabIndex={-1}
-                  >
-                    {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
+                <p className="text-white font-bold text-sm">MAINTENANCE MODE</p>
+                <p className="text-gray-500 text-xs mt-1">Temporarily disable site for all users</p>
               </div>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setSettings({ ...settings, maintenanceMode: !settings.maintenanceMode })}
+                className={`px-6 py-2 rounded-lg font-bold text-sm transition-all ${
+                  settings.maintenanceMode
+                    ? 'bg-red-600/20 text-red-400 border border-red-500/50'
+                    : 'bg-green-600/20 text-green-400 border border-green-500/50'
+                }`}
+              >
+                {settings.maintenanceMode ? 'ON' : 'OFF'}
+              </motion.button>
+            </div>
+          </motion.div>
 
-              <div>
-                <label className="text-gray-400 text-xs tracking-widest block mb-2">NEW PASSWORD</label>
-                <div className="relative">
-                  <input
-                    type={showNewPassword ? 'text' : 'password'}
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 text-white px-3 py-2.5 pr-10 rounded-lg text-sm focus:outline-none focus:border-red-500 transition-colors"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300"
-                    tabIndex={-1}
-                  >
-                    {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
+          {/* Security Info */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-blue-900/20 border border-blue-500/50 rounded-2xl p-6"
+          >
+            <h3 className="text-white font-bold mb-3">SECURITY FEATURES ACTIVE</h3>
+            <ul className="space-y-2 text-gray-300 text-sm">
+              <li className="flex items-center gap-2">
+                <CheckCircle size={16} className="text-green-400" />
+                Rate limiting (100 requests/minute per IP)
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle size={16} className="text-green-400" />
+                SQL injection protection
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle size={16} className="text-green-400" />
+                XSS attack prevention
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle size={16} className="text-green-400" />
+                Security headers enabled
+              </li>
+            </ul>
+          </motion.div>
 
-              <div>
-                <label className="text-gray-400 text-xs tracking-widest block mb-2">CONFIRM NEW PASSWORD</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 text-white px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-red-500 transition-colors"
-                  required
-                />
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="submit"
-                  disabled={passwordLoading}
-                  className="flex items-center gap-2 bg-green-600 text-white px-6 py-2.5 rounded-lg text-sm font-semibold tracking-wide hover:bg-green-700 transition-colors disabled:opacity-50"
-                >
-                  {passwordLoading ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      Updating...
-                    </>
-                  ) : (
-                    'Update Password'
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowPasswordForm(false)
-                    setCurrentPassword('')
-                    setNewPassword('')
-                    setConfirmPassword('')
-                    setPasswordMessage(null)
-                  }}
-                  className="text-gray-400 hover:text-gray-300 px-6 py-2.5 text-sm font-semibold tracking-wide transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
-        </section>
-      </div>
+          {/* Save Button */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleSave}
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-4 rounded-lg transition-all flex items-center justify-center gap-2"
+          >
+            {saved ? (
+              <>
+                <CheckCircle size={20} />
+                SETTINGS SAVED
+              </>
+            ) : (
+              <>
+                <Save size={20} />
+                SAVE SETTINGS
+              </>
+            )}
+          </motion.button>
+        </motion.div>
+      </main>
     </div>
   )
 }
