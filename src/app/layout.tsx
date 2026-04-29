@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { UserAuthProvider } from '@/components/user/UserAuthProvider'
+import FloatingChat from '@/components/FloatingChat'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -40,6 +41,7 @@ export default function RootLayout({
       <body>
         <UserAuthProvider>
           {children}
+          <FloatingChat />
         </UserAuthProvider>
       </body>
     </html>
