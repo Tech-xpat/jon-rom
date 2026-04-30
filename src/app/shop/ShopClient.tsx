@@ -17,19 +17,19 @@ interface Product {
 }
 
 const productDefaults: Product[] = [
-  { id: 1, image: '/images/shop/WhatsApp Image 2026-04-23 at 19.13.27.jpeg', name: 'Premium T-Shirt Black', price: 29.99, stock: 45, description: 'Exclusive Jonathan Roumie Collection' },
-  { id: 2, image: '/images/shop/WhatsApp Image 2026-04-23 at 19.13.27 (1).jpeg', name: 'Premium T-Shirt White', price: 29.99, stock: 38, description: 'Classic Design' },
-  { id: 3, image: '/images/shop/WhatsApp Image 2026-04-23 at 19.13.28.jpeg', name: 'Signature Hoodie', price: 59.99, stock: 22, description: 'Comfortable & Premium Quality' },
-  { id: 4, image: '/images/shop/WhatsApp Image 2026-04-23 at 19.13.28 (1).jpeg', name: 'Signature Hoodie Alt', price: 59.99, stock: 19, description: 'Limited Edition' },
-  { id: 5, image: '/images/shop/WhatsApp Image 2026-04-23 at 19.13.29.jpeg', name: 'Exclusive Apparel', price: 34.99, stock: 51, description: 'Fan Favorite' },
-  { id: 6, image: '/images/shop/WhatsApp Image 2026-04-23 at 19.13.29 (1).jpeg', name: 'Premium Collection Item', price: 44.99, stock: 28, description: 'Collector\'s Edition' },
-  { id: 7, image: '/images/shop/WhatsApp Image 2026-04-23 at 19.13.29 (2).jpeg', name: 'Signature Series', price: 39.99, stock: 35, description: 'Official Merchandise' },
-  { id: 8, image: '/images/shop/WhatsApp Image 2026-04-23 at 19.13.29 (3).jpeg', name: 'Limited Apparel', price: 54.99, stock: 14, description: 'Rare & Exclusive' },
-  { id: 9, image: '/images/shop/WhatsApp Image 2026-04-23 at 19.13.29 (4).jpeg', name: 'Classic Design Tee', price: 26.99, stock: 62, description: 'Best Seller' },
-  { id: 10, image: '/images/shop/WhatsApp Image 2026-04-23 at 19.13.30.jpeg', name: 'Performance Hoodie', price: 64.99, stock: 17, description: 'Premium Comfort' },
-  { id: 11, image: '/images/shop/WhatsApp Image 2026-04-23 at 19.13.30 (1).jpeg', name: 'Exclusive Tee', price: 31.99, stock: 40, description: 'Limited Availability' },
-  { id: 12, image: '/images/shop/WhatsApp Image 2026-04-23 at 19.13.30 (2).jpeg', name: 'Premium Edition', price: 49.99, stock: 23, description: 'VIP Collection' },
-  { id: 13, image: '/images/shop/WhatsApp Image 2026-04-23 at 19.13.30 (3).jpeg', name: 'Signature Hoodie Premium', price: 69.99, stock: 12, description: 'Luxury Line' },
+  { id: 1, image: '/images/shop/WhatsApp_Image_2026-04-23_at_19.13.27.jpeg', name: 'Premium T-Shirt Black', price: 29.99, stock: 45, description: 'Exclusive Jonathan Roumie Collection' },
+  { id: 2, image: '/images/shop/WhatsApp_Image_2026-04-23_at_19.13.27_(1).jpeg', name: 'Premium T-Shirt White', price: 29.99, stock: 38, description: 'Classic Design' },
+  { id: 3, image: '/images/shop/WhatsApp_Image_2026-04-23_at_19.13.28.jpeg', name: 'Signature Hoodie', price: 59.99, stock: 22, description: 'Comfortable & Premium Quality' },
+  { id: 4, image: '/images/shop/WhatsApp_Image_2026-04-23_at_19.13.28_(1).jpeg', name: 'Signature Hoodie Alt', price: 59.99, stock: 19, description: 'Limited Edition' },
+  { id: 5, image: '/images/shop/WhatsApp_Image_2026-04-23_at_19.13.29.jpeg', name: 'Exclusive Apparel', price: 34.99, stock: 51, description: 'Fan Favorite' },
+  { id: 6, image: '/images/shop/WhatsApp_Image_2026-04-23_at_19.13.29_(1).jpeg', name: 'Premium Collection Item', price: 44.99, stock: 28, description: 'Collector\'s Edition' },
+  { id: 7, image: '/images/shop/WhatsApp_Image_2026-04-23_at_19.13.29_(2).jpeg', name: 'Signature Series', price: 39.99, stock: 35, description: 'Official Merchandise' },
+  { id: 8, image: '/images/shop/WhatsApp_Image_2026-04-23_at_19.13.29_(3).jpeg', name: 'Limited Apparel', price: 54.99, stock: 14, description: 'Rare & Exclusive' },
+  { id: 9, image: '/images/shop/WhatsApp_Image_2026-04-23_at_19.13.29_(4).jpeg', name: 'Classic Design Tee', price: 26.99, stock: 62, description: 'Best Seller' },
+  { id: 10, image: '/images/shop/WhatsApp_Image_2026-04-23_at_19.13.30.jpeg', name: 'Performance Hoodie', price: 64.99, stock: 17, description: 'Premium Comfort' },
+  { id: 11, image: '/images/shop/WhatsApp_Image_2026-04-23_at_19.13.30_(1).jpeg', name: 'Exclusive Tee', price: 31.99, stock: 40, description: 'Limited Availability' },
+  { id: 12, image: '/images/shop/WhatsApp_Image_2026-04-23_at_19.13.30_(2).jpeg', name: 'Premium Edition', price: 49.99, stock: 23, description: 'VIP Collection' },
+  { id: 13, image: '/images/shop/WhatsApp_Image_2026-04-23_at_19.13.30_(3).jpeg', name: 'Signature Hoodie Premium', price: 69.99, stock: 12, description: 'Luxury Line' },
 ]
 
 interface CartItem extends Product {

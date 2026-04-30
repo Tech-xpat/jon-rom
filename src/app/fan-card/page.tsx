@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import {
   Download, CreditCard, Sparkles, CheckCircle, Copy, Check,
-  Bitcoin, Clock, AlertCircle, Loader2, LogIn, Mail, User as UserIcon,
+  Bitcoin, Clock, AlertCircle, Loader2, LogIn, Mail, User as UserIcon, Truck, MapPin,
 } from 'lucide-react'
 import Image from 'next/image'
 import Header from '@/components/layout/Header'
@@ -242,13 +242,20 @@ function ApplicationForm({
   const [method, setMethod] = useState<PayMethod>(hasUsdt ? 'USDT' : 'BTC')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [addWaybill, setAddWaybill] = useState(false)
+  const [shippingAddress, setShippingAddress] = useState('')
 
+  const waybillPrice = 23.00
   const priceUsd = (price / 100).toFixed(2)
+  const totalPrice = addWaybill 
+    ? (parseFloat(priceUsd) + waybillPrice).toFixed(2)
+    : priceUsd
 
   const handleSubmit = async () => {
     setError(null)
     if (!name.trim()) { setError('Please enter the name to engrave on your card.'); return }
     if (!email.trim() || !email.includes('@')) { setError('Please enter a valid email address.'); return }
+    if (addWaybill && !shippingAddress.trim()) { setError('Please enter your shipping address for waybill.'); return }
     const addr = method === 'BTC' ? wallets.btc?.address : wallets.usdt?.address
     if (!addr) { setError('Payment method not available. Please try the other option.'); return }
 
@@ -257,7 +264,14 @@ function ApplicationForm({
       const res = await fetch('/api/checkout/create-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.toLowerCase().trim(), name: name.trim(), currency: method, amount: parseFloat(priceUsd) }),
+        body: JSON.stringify({ 
+          email: email.toLowerCase().trim(), 
+          name: name.trim(), 
+          currency: method, 
+          amount: parseFloat(totalPrice),
+          waybill: addWaybill,
+          shippingAddress: addWaybill ? shippingAddress.trim() : undefined,
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Submission failed')
@@ -288,9 +302,53 @@ function ApplicationForm({
           <p className="text-white font-bold">Official Fan Card</p>
         </div>
         <div className="text-right">
-          <p className="text-white text-2xl font-black">${priceUsd}</p>
-          <p className="text-gray-500 text-xs">one-time</p>
+          <p className="text-white text-2xl font-black">${totalPrice}</p>
+          <p className="text-gray-500 text-xs">{addWaybill ? `Card + Waybill` : 'Digital Only'}</p>
         </div>
+      </div>
+
+      {/* Waybill Option */}
+      <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
+        <button
+          onClick={() => setAddWaybill(!addWaybill)}
+          className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors"
+        >
+          <input
+            type="checkbox"
+            checked={addWaybill}
+            onChange={() => setAddWaybill(!addWaybill)}
+            className="w-5 h-5 cursor-pointer accent-jcvd-red"
+          />
+          <div className="flex-1 text-left">
+            <div className="flex items-center gap-2 text-white font-bold">
+              <Truck size={16} />
+              Add Waybill Shipping
+            </div>
+            <p className="text-gray-400 text-xs">Physical delivery with tracking</p>
+          </div>
+          <span className="text-jcvd-red font-black">+${waybillPrice.toFixed(2)}</span>
+        </button>
+
+        {addWaybill && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-4 pt-4 border-t border-white/10 space-y-3"
+          >
+            <label className="flex items-center gap-2 text-gray-400 text-xs tracking-widest uppercase mb-2">
+              <MapPin size={12} />
+              Shipping Address
+            </label>
+            <textarea
+              value={shippingAddress}
+              onChange={(e) => setShippingAddress(e.target.value)}
+              placeholder="Enter your full mailing address..."
+              className="w-full bg-black/30 border border-white/10 text-white px-4 py-3 rounded-lg focus:outline-none focus:border-jcvd-red transition-colors placeholder:text-white/20 text-sm resize-none"
+              rows={4}
+            />
+            <p className="text-gray-500 text-xs">Include street address, city, state, ZIP, and country</p>
+          </motion.div>
+        )}
       </div>
 
       {/* Payment method */}
@@ -617,25 +675,47 @@ export default function FanCardPage() {
 
           {/* ── Whitelisted ── */}
           {pageState === 'whitelisted' && (
-            <section className="max-w-2xl mx-auto">
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-green-900/20 border border-green-800/50 rounded-2xl p-8 text-center space-y-6">
-                <CheckCircle size={48} className="text-green-400 mx-auto" />
-                <div>
-                  <h3 className="text-2xl font-bold text-white mb-2">Card Verified & Ready!</h3>
-                  <p className="text-green-300 mb-4">
-                    Your fan card has been approved and is ready for download.
-                  </p>
-                  <p className="text-gray-400 text-sm">
-                    Check your email for download instructions.
-                  </p>
+            <section className="mb-16">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
+                <FanCard3D name={cardName} memberId={memberId} cardRef={cardRef} />
+              </motion.div>
+
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="max-w-md mx-auto space-y-4">
+                <div className="bg-green-900/20 border border-green-800/50 rounded-xl p-4 text-center mb-4">
+                  <CheckCircle size={32} className="text-green-400 mx-auto mb-2" />
+                  <h3 className="text-white font-bold">Payment Verified!</h3>
+                  <p className="text-green-300 text-sm mt-1">Your card is now ready for download.</p>
                 </div>
 
-                <button
-                  onClick={() => logout()}
-                  className="w-full bg-white/10 hover:bg-white/20 text-white py-3 rounded-xl font-bold tracking-widest transition-all"
-                >
-                  Sign Out
-                </button>
+                <input
+                  type="text"
+                  value={cardName}
+                  onChange={(e) => setCardName(e.target.value.slice(0, 30))}
+                  placeholder="Your Name on Card"
+                  className="w-full bg-white/5 border border-white/10 text-white px-6 py-3 rounded-xl text-center focus:outline-none focus:border-jcvd-red transition-colors placeholder:text-white/20"
+                />
+
+                <div className="flex gap-2 flex-col">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleExport}
+                    disabled={!cardName || exporting}
+                    className="w-full bg-jcvd-red hover:bg-red-700 text-white py-3 rounded-xl font-bold tracking-widest transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    <Download size={18} />
+                    {exporting ? 'Downloading...' : 'DOWNLOAD CARD'}
+                  </motion.button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => logout()}
+                    className="w-full bg-white/10 hover:bg-white/20 text-white py-3 rounded-xl font-bold tracking-widest transition-all"
+                  >
+                    Sign Out
+                  </motion.button>
+                </div>
               </motion.div>
             </section>
           )}
