@@ -8,6 +8,13 @@ import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import Link from 'next/link'
 
+interface PaymentMethods {
+  crypto?: { btc?: { enabled: boolean; address?: string }; usdt?: { enabled: boolean; address?: string } }
+  paypal?: { enabled: boolean; clientId?: string }
+  stripe?: { enabled: boolean; publishableKey?: string }
+  cashapp?: { enabled: boolean; handle?: string }
+}
+
 interface Wallets {
   btc?: { address: string }
   usdt?: { address: string }
@@ -17,45 +24,61 @@ export default function CheckoutPage() {
   const { user, loading, getToken } = useUserAuth()
   const [paymentMethod, setPaymentMethod] = useState<'BTC' | 'USDT' | 'PayPal' | 'Stripe'>('USDT')
   const [wallets, setWallets] = useState<Wallets>({})
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethods>({})
   const [walletsLoading, setWalletsLoading] = useState(true)
   const [copied, setCopied] = useState(false)
   const [creating, setCreating] = useState(false)
   const [fanCardPrice, setFanCardPrice] = useState<number | null>(null)
   const [priceLoading, setPriceLoading] = useState(true)
+  const [availableMethods, setAvailableMethods] = useState<string[]>([])
 
   useEffect(() => {
-    const loadWallets = async () => {
+    const loadPaymentData = async () => {
       try {
-        const res = await fetch('/api/checkout/wallets')
-        if (res.ok) {
-          const data = await res.json()
-          setWallets(data)
+        // Load payment methods from Firestore
+        const methodsRes = await fetch('/api/checkout/payment-methods')
+        if (methodsRes.ok) {
+          const methodsData = await methodsRes.json()
+          setPaymentMethods(methodsData)
+          
+          // Determine available payment methods
+          const methods: string[] = []
+          if (methodsData.crypto?.btc?.enabled) methods.push('BTC')
+          if (methodsData.crypto?.usdt?.enabled) methods.push('USDT')
+          if (methodsData.paypal?.enabled) methods.push('PayPal')
+          if (methodsData.stripe?.enabled) methods.push('Stripe')
+          setAvailableMethods(methods)
+          
+          // Set first available method as default
+          if (methods.length > 0 && !methods.includes('USDT')) {
+            setPaymentMethod(methods[0] as 'BTC' | 'USDT' | 'PayPal' | 'Stripe')
+          }
         }
-      } catch (err) {
-        console.error('Failed to load wallets:', err)
-      } finally {
-        setWalletsLoading(false)
-      }
-    }
 
-    const loadFanCardPrice = async () => {
-      try {
-        const res = await fetch('/api/fan-card/price')
-        if (res.ok) {
-          const data = await res.json()
-          if (typeof data.price === 'number') {
-            setFanCardPrice(Number((data.price / 100).toFixed(2)))
+        // Load crypto wallets from existing endpoint
+        const walletsRes = await fetch('/api/checkout/wallets')
+        if (walletsRes.ok) {
+          const walletsData = await walletsRes.json()
+          setWallets(walletsData)
+        }
+
+        // Load fan card price from Firestore
+        const priceRes = await fetch('/api/checkout/fan-card-price')
+        if (priceRes.ok) {
+          const priceData = await priceRes.json()
+          if (typeof priceData.price === 'number') {
+            setFanCardPrice(Number((priceData.price / 100).toFixed(2)))
           }
         }
       } catch (err) {
-        console.error('Failed to load fan card price:', err)
+        console.error('Failed to load payment data:', err)
       } finally {
+        setWalletsLoading(false)
         setPriceLoading(false)
       }
     }
 
-    loadWallets()
-    loadFanCardPrice()
+    loadPaymentData()
   }, [])
 
   if (loading) {
@@ -143,22 +166,26 @@ export default function CheckoutPage() {
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="lg:col-span-1">
               <h2 className="text-white font-bold tracking-widest text-sm mb-3 sm:mb-4">SELECT PAYMENT METHOD</h2>
               <div className="space-y-2 sm:space-y-3">
-                {(['USDT', 'BTC', 'PayPal', 'Stripe'] as const).map((method) => (
-                  <button
-                    key={method}
-                    onClick={() => setPaymentMethod(method)}
-                    className={`w-full flex items-center gap-3 p-3 sm:p-4 rounded-lg border transition-colors text-sm sm:text-base ${
-                      paymentMethod === method
-                        ? 'bg-red-900/20 border-red-600/50 text-red-400'
-                        : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20'
-                    }`}
-                  >
-                    {method === 'BTC' && <Bitcoin size={18} className="flex-shrink-0" />}
-                    {method === 'USDT' && <Wallet size={18} className="flex-shrink-0" />}
-                    {(method === 'PayPal' || method === 'Stripe') && <CreditCard size={18} className="flex-shrink-0" />}
-                    <span className="font-semibold">{method}</span>
-                  </button>
-                ))}
+                {availableMethods.length === 0 ? (
+                  <p className="text-gray-400 text-sm">No payment methods available. Please contact admin.</p>
+                ) : (
+                  availableMethods.map((method) => (
+                    <button
+                      key={method}
+                      onClick={() => setPaymentMethod(method as 'BTC' | 'USDT' | 'PayPal' | 'Stripe')}
+                      className={`w-full flex items-center gap-3 p-3 sm:p-4 rounded-lg border transition-colors text-sm sm:text-base ${
+                        paymentMethod === method
+                          ? 'bg-red-900/20 border-red-600/50 text-red-400'
+                          : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20'
+                      }`}
+                    >
+                      {method === 'BTC' && <Bitcoin size={18} className="flex-shrink-0" />}
+                      {method === 'USDT' && <Wallet size={18} className="flex-shrink-0" />}
+                      {(method === 'PayPal' || method === 'Stripe') && <CreditCard size={18} className="flex-shrink-0" />}
+                      <span className="font-semibold">{method}</span>
+                    </button>
+                  ))
+                )}
               </div>
             </motion.div>
 

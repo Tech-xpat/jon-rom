@@ -199,12 +199,3 @@ export default function AdminFanCardPage() {
     </div>
   )
 }
-              <Save size={16} />
-              Save Settings
-            </>
-          )}
-        </button>
-      </div>
-    </div>
-  )
-}
