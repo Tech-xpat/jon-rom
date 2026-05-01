@@ -61,7 +61,6 @@ export async function POST(request: NextRequest) {
       status: 'pending',
        waybill: waybill || false,
       shippingAddress: shippingAddress?.trim() || '',
-      createdAt: new Date().toISOString(),
     })
 
     return NextResponse.json({
