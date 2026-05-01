@@ -5,7 +5,8 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const db = adminDb()
+    const db = adminDb // ✅ FIXED (no parentheses)
+
     const snapshot = await db.collection('productPrices').get()
 
     if (snapshot.empty) {
@@ -44,7 +45,9 @@ export async function GET() {
         id: doc.id,
         name: data.name || 'Unnamed Product',
         description: data.description || '',
-        price: typeof data.price === 'number' ? (data.price / 100).toFixed(2) : data.price || 0,
+        price: typeof data.price === 'number'
+          ? Number((data.price / 100).toFixed(2)) // 👈 small fix: keep it a number
+          : data.price || 0,
         image: data.image || '/images/hero/download (6).jfif',
         category: data.category || 'general',
       }
@@ -53,6 +56,7 @@ export async function GET() {
     return NextResponse.json(products)
   } catch (error: any) {
     console.error('Failed to fetch products:', error)
+
     // Return fallback products on error
     return NextResponse.json([
       {
