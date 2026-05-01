@@ -131,33 +131,32 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-black">
       <Header variant="main" />
 
-      <main className="pt-24 pb-16 px-4">
-        <div className="max-w-2xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-12">
-            <h1 className="text-white text-3xl font-black tracking-widest mb-2">APPLY FOR FAN CARD</h1>
-            <p className="text-gray-400">Complete your application with crypto payment</p>
+      <main className="pt-20 sm:pt-24 pb-16 px-4">
+        <div className="max-w-3xl mx-auto">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8 sm:mb-12">
+            <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-black tracking-widest mb-2">APPLY FOR FAN CARD</h1>
+            <p className="text-gray-400 text-sm sm:text-base">Complete your application with payment</p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
             {/* Payment Methods */}
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="md:col-span-1">
-              <h2 className="text-white font-bold tracking-widest text-sm mb-4">SELECT PAYMENT METHOD</h2>
-              <div className="space-y-3">
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="lg:col-span-1">
+              <h2 className="text-white font-bold tracking-widest text-sm mb-3 sm:mb-4">SELECT PAYMENT METHOD</h2>
+              <div className="space-y-2 sm:space-y-3">
                 {(['USDT', 'BTC', 'PayPal', 'Stripe'] as const).map((method) => (
                   <button
                     key={method}
                     onClick={() => setPaymentMethod(method)}
-                    className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-colors ${
+                    className={`w-full flex items-center gap-3 p-3 sm:p-4 rounded-lg border transition-colors text-sm sm:text-base ${
                       paymentMethod === method
                         ? 'bg-red-900/20 border-red-600/50 text-red-400'
                         : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20'
                     }`}
                   >
-                    {method === 'BTC' && <Bitcoin size={20} />}
-                    {method === 'USDT' && <Wallet size={20} />}
-                    {method === 'PayPal' && <CreditCard size={20} />}
-                    {method === 'Stripe' && <CreditCard size={20} />}
-                    <span className="font-semibold text-sm">{method}</span>
+                    {method === 'BTC' && <Bitcoin size={18} className="flex-shrink-0" />}
+                    {method === 'USDT' && <Wallet size={18} className="flex-shrink-0" />}
+                    {(method === 'PayPal' || method === 'Stripe') && <CreditCard size={18} className="flex-shrink-0" />}
+                    <span className="font-semibold">{method}</span>
                   </button>
                 ))}
               </div>
@@ -168,10 +167,10 @@ export default function CheckoutPage() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               key={paymentMethod}
-              className="md:col-span-2 bg-white/3 border border-white/5 rounded-2xl p-8 space-y-6"
+              className="lg:col-span-2 bg-white/3 border border-white/5 rounded-2xl p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6"
             >
               {walletsLoading ? (
-                <div className="text-center py-12">
+                <div className="text-center py-8 sm:py-12">
                   <div className="w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full animate-spin mx-auto" />
                 </div>
               ) : (
@@ -179,14 +178,14 @@ export default function CheckoutPage() {
                   {paymentMethod === 'USDT' && wallets.usdt ? (
                     <>
                       <div>
-                        <h3 className="text-white font-bold tracking-widest text-sm mb-3">SEND USDT TO</h3>
-                        <div className="bg-white/5 border border-white/10 rounded-lg p-4 font-mono text-sm text-gray-300 break-all mb-3">
+                        <h3 className="text-white font-bold tracking-widest text-xs sm:text-sm mb-2 sm:mb-3">SEND USDT TO</h3>
+                        <div className="bg-white/5 border border-white/10 rounded-lg p-3 sm:p-4 font-mono text-xs sm:text-sm text-gray-300 break-all mb-3">
                           {wallets.usdt.address}
                         </div>
                         {priceLoading ? (
-                          <p className="text-gray-400 text-sm mb-3">Loading current fan card price…</p>
+                          <p className="text-gray-400 text-xs sm:text-sm mb-3">Loading current fan card price…</p>
                         ) : (
-                          <p className="text-gray-300 text-sm mb-3">
+                          <p className="text-gray-300 text-xs sm:text-sm mb-3">
                             Amount to send: <span className="text-white font-bold">${fanCardPrice?.toFixed(2) ?? 'N/A'}</span>
                           </p>
                         )}

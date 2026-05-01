@@ -20,14 +20,40 @@ export async function POST(request: Request) {
 
     // Check if user already exists
     let user = await getUserByEmail(email)
+    let isNewUser = false
 
     if (!user) {
       // Create new user with whitelisted = false by default
       user = await createUser(email, googleId)
+      isNewUser = true
     } else {
       // Update google ID if not set
       if (googleId && !user.googleId) {
         user.googleId = googleId
+      }
+    }
+
+    // Initialize reward profile for new users
+    if (isNewUser) {
+      try {
+        const rewardRes = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/user/reward-profile`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ email: user.email }),
+        })
+
+        if (!rewardRes.ok) {
+          console.warn('[Register] Failed to initialize reward profile:', await rewardRes.text())
+          // Continue anyway - reward profile creation shouldn't block user registration
+        } else {
+          console.log('[Register] Reward profile created for:', user.email)
+        }
+      } catch (err) {
+        console.warn('[Register] Reward profile creation error:', err)
+        // Continue anyway
       }
     }
 
@@ -37,6 +63,7 @@ export async function POST(request: Request) {
       whitelisted: user.whitelisted,
       fanStatus: user.fanStatus,
       paymentStatus: user.paymentStatus,
+      isNewUser,
     })
   } catch (error: any) {
     console.error('Register error:', error)

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Save, Loader2 } from 'lucide-react'
+import { Save, Loader2, AlertCircle, Check } from 'lucide-react'
 import { useFirestoreListener } from '@/hooks/useFirestoreListener'
 import { useFirestoreSync } from '@/hooks/useFirestoreSync'
 import type { FanCardSettings } from '@/lib/firestore'
@@ -20,23 +20,39 @@ export default function AdminFanCardPage() {
   })
   const [antiScreenshot, setAntiScreenshot] = useState(true)
   const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
 
   // Sync Firestore data to local state
   useEffect(() => {
     if (firestoreSettings) {
-      console.log('[v0] Syncing Firestore fan card settings to state:', firestoreSettings)
+      console.log('[Fan Card] Syncing Firestore settings to state:', firestoreSettings)
       setSettings(firestoreSettings)
+      setError(null)
     }
   }, [firestoreSettings])
 
-  const handleSave = async () => {
+  const handleSave = async (retryAttempt = 0) => {
     try {
-      console.log('[v0] Saving fan card settings:', settings)
+      setError(null)
+      console.log('[Fan Card] Saving settings:', settings)
       await sync('fanCard', settings)
       setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
-    } catch (e) {
-      console.error('[v0] Save failed:', e)
+      setRetryCount(0)
+      setTimeout(() => setSaved(false), 3000)
+    } catch (e: any) {
+      const errorMsg = e?.message || 'Failed to save. Please try again.'
+      console.error('[Fan Card] Save failed:', errorMsg)
+      setError(errorMsg)
+      
+      // Auto-retry up to 3 times
+      if (retryAttempt < 3) {
+        console.log(`[Fan Card] Retrying in 2 seconds... (attempt ${retryAttempt + 1}/3)`)
+        setTimeout(() => {
+          setRetryCount(retryAttempt + 1)
+          handleSave(retryAttempt + 1)
+        }, 2000)
+      }
     }
   }
 
@@ -50,16 +66,43 @@ export default function AdminFanCardPage() {
   )
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-2xl w-full">
       <div className="mb-8">
-        <h1 className="text-white text-2xl font-black tracking-widest">FAN CARD SETTINGS</h1>
+        <h1 className="text-white text-2xl sm:text-3xl font-black tracking-widest">FAN CARD SETTINGS</h1>
         <p className="text-gray-500 text-sm mt-1">Manage pricing and design of the fan card</p>
       </div>
+
+      {/* Error Alerts */}
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-start gap-3 bg-red-900/20 border border-red-800/50 rounded-lg p-4 mb-6"
+        >
+          <AlertCircle size={18} className="flex-shrink-0 mt-0.5 text-red-400" />
+          <div className="flex-1">
+            <p className="text-red-300 text-sm font-medium">{error}</p>
+            {retryCount > 0 && <p className="text-red-400/80 text-xs mt-1">Retry attempt {retryCount}/3...</p>}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Success Alert */}
+      {saved && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-3 bg-green-900/20 border border-green-800/50 rounded-lg p-4 mb-6"
+        >
+          <Check size={18} className="text-green-400" />
+          <p className="text-green-300 text-sm font-medium">Saved successfully!</p>
+        </motion.div>
+      )}
 
       {/* Live preview */}
       <div className="mb-8">
         <p className="text-gray-400 text-xs tracking-widest mb-3">LIVE PREVIEW</p>
-        <div className="w-[340px] h-[210px] rounded-2xl overflow-hidden relative border border-white/10"
+        <div className="w-full max-w-[340px] aspect-video rounded-2xl overflow-hidden relative border border-white/10"
           style={{ background: settings.background, boxShadow: `0 20px 40px ${settings.accentColor}33` }}>
           <div className="absolute top-0 left-0 right-0 h-1" style={{ background: `linear-gradient(90deg, ${settings.accentColor}, ${settings.accentColor}88, ${settings.accentColor})` }} />
           <div className="absolute bottom-3 left-5 right-5 flex justify-between items-center">
@@ -75,10 +118,10 @@ export default function AdminFanCardPage() {
         </div>
       </div>
 
-      <div className="space-y-5 bg-white/3 border border-white/5 rounded-2xl p-6">
+      <div className="space-y-5 bg-white/3 border border-white/5 rounded-2xl p-4 sm:p-6">
         <div>
           <label className="text-gray-400 text-xs tracking-widest block mb-2">PRICE (USD)</label>
-          <div className="relative w-40">
+          <div className="relative w-full sm:w-40">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
             <input type="number" step="0.01" min="0.99" value={(settings.price / 100).toFixed(2)}
               onChange={(e) => setSettings({ ...settings, price: Math.round(parseFloat(e.target.value) * 100) })}
@@ -92,7 +135,7 @@ export default function AdminFanCardPage() {
             <input type="color" value={settings.accentColor} onChange={(e) => setSettings({ ...settings, accentColor: e.target.value })}
               className="w-12 h-10 rounded-lg border border-white/10 bg-transparent cursor-pointer" />
             <input type="text" value={settings.accentColor} onChange={(e) => setSettings({ ...settings, accentColor: e.target.value })}
-              className="bg-white/5 border border-white/10 text-white px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-red-500 transition-colors w-32" />
+              className="bg-white/5 border border-white/10 text-white px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-red-500 transition-colors w-32 font-mono" />
           </div>
         </div>
 
@@ -129,25 +172,33 @@ export default function AdminFanCardPage() {
           </label>
         </div>
 
-        {syncError && (
-          <div className="bg-red-950/40 border border-red-800/60 rounded-lg p-3 mb-4">
-            <p className="text-red-400 text-sm">{syncError}</p>
-          </div>
-        )}
-        
-        <button onClick={handleSave} disabled={isSyncing}
-          className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-xl text-sm font-bold tracking-wide hover:bg-red-700 transition-colors disabled:opacity-50">
-          {isSyncing ? (
+        <motion.button 
+          onClick={() => handleSave()} 
+          disabled={isSyncing || retryCount > 0}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="w-full flex items-center justify-center gap-2 bg-red-600 text-white px-6 py-3 rounded-xl text-sm font-bold tracking-wide hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          {isSyncing || retryCount > 0 ? (
             <>
               <Loader2 size={16} className="animate-spin" />
               Saving...
             </>
           ) : saved ? (
             <>
-              <span>✓ Saved to Firestore!</span>
+              <Check size={16} />
+              Saved!
             </>
           ) : (
             <>
+              <Save size={16} />
+              Save Settings
+            </>
+          )}
+        </motion.button>
+      </div>
+    </div>
+  )
+}
               <Save size={16} />
               Save Settings
             </>
