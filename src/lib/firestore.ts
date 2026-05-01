@@ -164,6 +164,7 @@ export interface Payment {
   status: 'pending' | 'confirmed' | 'failed'
   qrCode?: string
   transactionId?: string
+  waybill?: boolean 
   createdAt: string
   updatedAt: string
 }
