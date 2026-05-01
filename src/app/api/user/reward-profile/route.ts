@@ -26,19 +26,19 @@ export interface RewardProfile {
   }
 }
 
-// GET user's reward profile
+// GET reward profile
 export async function GET(request: NextRequest) {
   try {
     const token = request.headers.get('Authorization')?.split(' ')[1]
     const verified = await verifyUserToken(token || '')
-    
+
     if (!verified) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const db = getDb()
     const doc = await db.collection('rewards').doc(verified.uid).get()
-    
+
     if (doc.exists) {
       return NextResponse.json(doc.data())
     }
@@ -46,16 +46,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ message: 'Reward profile not found' }, { status: 404 })
   } catch (error: any) {
     console.error('[Rewards] GET error:', error)
-    return NextResponse.json({ error: error.message || 'Failed to fetch reward profile' }, { status: 500 })
+    return NextResponse.json(
+      { error: error.message || 'Failed to fetch reward profile' },
+      { status: 500 }
+    )
   }
 }
 
-// CREATE/INITIALIZE reward profile for new user
+// CREATE reward profile
 export async function POST(request: NextRequest) {
   try {
     const token = request.headers.get('Authorization')?.split(' ')[1]
     const verified = await verifyUserToken(token || '')
-    
+
     if (!verified) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -67,14 +70,12 @@ export async function POST(request: NextRequest) {
     }
 
     const db = getDb()
-    
-    // Check if reward profile already exists
+
     const existing = await db.collection('rewards').doc(verified.uid).get()
     if (existing.exists) {
       return NextResponse.json({ message: 'Reward profile already exists' }, { status: 409 })
     }
 
-    // Create new reward profile
     const newProfile: RewardProfile = {
       userId: verified.uid,
       email: email.toLowerCase(),
@@ -93,7 +94,6 @@ export async function POST(request: NextRequest) {
 
     await db.collection('rewards').doc(verified.uid).set(newProfile)
 
-    console.log('[Rewards] Profile created for user:', verified.uid)
     return NextResponse.json({
       success: true,
       message: 'Reward profile initialized',
@@ -101,16 +101,19 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('[Rewards] POST error:', error)
-    return NextResponse.json({ error: error.message || 'Failed to create reward profile' }, { status: 500 })
+    return NextResponse.json(
+      { error: error.message || 'Failed to create reward profile' },
+      { status: 500 }
+    )
   }
 }
 
-// UPDATE reward profile (add points, claim rewards, etc.)
+// UPDATE reward profile
 export async function PUT(request: NextRequest) {
   try {
     const token = request.headers.get('Authorization')?.split(' ')[1]
     const verified = await verifyUserToken(token || '')
-    
+
     if (!verified) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -131,12 +134,12 @@ export async function PUT(request: NextRequest) {
 
     const profile = doc.data() as RewardProfile
 
-    // Handle different actions
+    // ---- ACTIONS ----
+
     if (action === 'addPoints' && points) {
       profile.totalPoints += points
       profile.lastActivityAt = new Date().toISOString()
-      
-      // Update tier based on points
+
       if (profile.totalPoints >= 5000) profile.tier = 'platinum'
       else if (profile.totalPoints >= 2000) profile.tier = 'gold'
       else if (profile.totalPoints >= 500) profile.tier = 'silver'
@@ -148,6 +151,7 @@ export async function PUT(request: NextRequest) {
         ...reward,
         claimedAt: new Date().toISOString(),
       })
+
       profile.totalRewards += 1
       profile.lastActivityAt = new Date().toISOString()
     }
@@ -157,9 +161,9 @@ export async function PUT(request: NextRequest) {
       profile.lastActivityAt = new Date().toISOString()
     }
 
-    await docRef.update(profile)
+    // ✅ FIX: Firestore-safe update (IMPORTANT CHANGE)
+    await docRef.set(profile, { merge: true })
 
-    console.log(`[Rewards] Profile updated - action: ${action}, user: ${verified.uid}`)
     return NextResponse.json({
       success: true,
       message: 'Reward profile updated',
@@ -167,6 +171,9 @@ export async function PUT(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('[Rewards] PUT error:', error)
-    return NextResponse.json({ error: error.message || 'Failed to update reward profile' }, { status: 500 })
+    return NextResponse.json(
+      { error: error.message || 'Failed to update reward profile' },
+      { status: 500 }
+    )
   }
 }
