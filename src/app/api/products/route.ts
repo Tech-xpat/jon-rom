@@ -1,16 +1,15 @@
-import { adminDb } from '@/lib/firebase-admin'
+import { getDb } from '@/lib/firestore'
 import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const db = adminDb // ✅ FIXED (no parentheses)
+    const db = getDb() // ✅ FIX: never null
 
     const snapshot = await db.collection('productPrices').get()
 
     if (snapshot.empty) {
-      // Return fallback products based on default prices
       return NextResponse.json([
         {
           id: 'fan-card',
@@ -46,7 +45,7 @@ export async function GET() {
         name: data.name || 'Unnamed Product',
         description: data.description || '',
         price: typeof data.price === 'number'
-          ? Number((data.price / 100).toFixed(2)) // 👈 small fix: keep it a number
+          ? Number((data.price / 100).toFixed(2))
           : data.price || 0,
         image: data.image || '/images/hero/download (6).jfif',
         category: data.category || 'general',
@@ -57,7 +56,6 @@ export async function GET() {
   } catch (error: any) {
     console.error('Failed to fetch products:', error)
 
-    // Return fallback products on error
     return NextResponse.json([
       {
         id: 'fan-card',
