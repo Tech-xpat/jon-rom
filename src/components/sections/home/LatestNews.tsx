@@ -4,12 +4,12 @@ import Image from 'next/image'
 import { ArrowRight } from 'lucide-react'
 
 const newsItems = [
-  { id: 1, image: '/images/news/Hallow\'s Lent Pray40.jfif', title: 'Lent Prayer Campaign', date: 'April 24, 2026' },
-  { id: 2, image: '/images/news/Rosie Roumie.jfif', title: 'Family Updates', date: 'April 22, 2026' },
-  { id: 3, image: '/images/news/download (2).jfif', title: 'Latest Project News', date: 'April 20, 2026' },
-  { id: 4, image: '/images/news/download (3).jfif', title: 'Exclusive Updates', date: 'April 18, 2026' },
-  { id: 5, image: '/images/news/download (4).jfif', title: 'Recent Announcement', date: 'April 16, 2026' },
-  { id: 6, image: '/images/news/hello my love it\'s me Jonathan roumie I love you all.jfif', title: 'Special Message', date: 'April 14, 2026' },
+  { id: 1, image: '/images/news/hallows-lent-pray40.jfif', title: 'Lent Prayer Campaign', date: 'April 24, 2026' },
+  { id: 2, image: '/images/news/rosie-roumie.jfif', title: 'Family Updates', date: 'April 22, 2026' },
+  { id: 3, image: '/images/news/news-2.jfif', title: 'Latest Project News', date: 'April 20, 2026' },
+  { id: 4, image: '/images/news/news-3.jfif', title: 'Exclusive Updates', date: 'April 18, 2026' },
+  { id: 5, image: '/images/news/news-4.jfif', title: 'Recent Announcement', date: 'April 16, 2026' },
+  { id: 6, image: '/images/news/special-message.jfif', title: 'Special Message', date: 'April 14, 2026' },
 ]
 
 export default function LatestNews() {

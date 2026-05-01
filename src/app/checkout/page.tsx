@@ -20,8 +20,8 @@ export default function CheckoutPage() {
   const [walletsLoading, setWalletsLoading] = useState(true)
   const [copied, setCopied] = useState(false)
   const [creating, setCreating] = useState(false)
-
-  const fanCardPrice = 4.99 // USD equivalent
+  const [fanCardPrice, setFanCardPrice] = useState<number | null>(null)
+  const [priceLoading, setPriceLoading] = useState(true)
 
   useEffect(() => {
     const loadWallets = async () => {
@@ -37,7 +37,25 @@ export default function CheckoutPage() {
         setWalletsLoading(false)
       }
     }
+
+    const loadFanCardPrice = async () => {
+      try {
+        const res = await fetch('/api/fan-card/price')
+        if (res.ok) {
+          const data = await res.json()
+          if (typeof data.price === 'number') {
+            setFanCardPrice(Number((data.price / 100).toFixed(2)))
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load fan card price:', err)
+      } finally {
+        setPriceLoading(false)
+      }
+    }
+
     loadWallets()
+    loadFanCardPrice()
   }, [])
 
   if (loading) {
@@ -89,7 +107,7 @@ export default function CheckoutPage() {
         },
         body: JSON.stringify({
           currency: paymentMethod,
-          amount: fanCardPrice,
+          amount: fanCardPrice ?? 0,
         }),
       })
 
@@ -165,6 +183,13 @@ export default function CheckoutPage() {
                         <div className="bg-white/5 border border-white/10 rounded-lg p-4 font-mono text-sm text-gray-300 break-all mb-3">
                           {wallets.usdt.address}
                         </div>
+                        {priceLoading ? (
+                          <p className="text-gray-400 text-sm mb-3">Loading current fan card price…</p>
+                        ) : (
+                          <p className="text-gray-300 text-sm mb-3">
+                            Amount to send: <span className="text-white font-bold">${fanCardPrice?.toFixed(2) ?? 'N/A'}</span>
+                          </p>
+                        )}
                         <button
                           onClick={() => handleCopyAddress(wallets.usdt?.address || '')}
                           className="flex items-center gap-2 text-xs bg-white/10 hover:bg-white/20 text-gray-300 px-3 py-2 rounded-lg transition-colors"
@@ -179,7 +204,7 @@ export default function CheckoutPage() {
                         <div className="text-sm text-blue-300">
                           <p className="font-semibold mb-1">Send Instructions:</p>
                           <ul className="space-y-1 text-xs">
-                            <li>• Amount: {fanCardPrice} USDT (ERC-20)</li>
+                            <li>• Amount: ${fanCardPrice?.toFixed(2) ?? '--'} USDT (ERC-20)</li>
                             <li>• Send to the address above</li>
                             <li>• Admin will confirm receipt within 24 hours</li>
                           </ul>
@@ -207,7 +232,7 @@ export default function CheckoutPage() {
                         <div className="text-sm text-orange-300">
                           <p className="font-semibold mb-1">Send Instructions:</p>
                           <ul className="space-y-1 text-xs">
-                            <li>• Amount: Check current BTC price</li>
+                            <li>• Amount: ${fanCardPrice?.toFixed(2) ?? '--'} BTC equivalent</li>
                             <li>• Send to the address above</li>
                             <li>• Admin will confirm receipt within 24 hours</li>
                           </ul>
@@ -243,7 +268,7 @@ export default function CheckoutPage() {
                   {(paymentMethod === 'USDT' || paymentMethod === 'BTC') && (
                     <button
                       onClick={handleCreatePayment}
-                      disabled={creating || !wallets[paymentMethod.toLowerCase() as keyof Wallets]}
+                      disabled={creating || priceLoading || fanCardPrice === null || !wallets[paymentMethod.toLowerCase() as keyof Wallets]}
                       className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-semibold transition-colors disabled:opacity-50"
                     >
                       {creating ? 'Creating Payment...' : 'I Have Sent Payment'}
