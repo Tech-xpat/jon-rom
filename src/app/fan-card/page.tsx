@@ -471,20 +471,68 @@ export default function FanCardPage() {
   ).toString().slice(0, 6).padStart(6, '0')}`
 
   // Load payment methods + price from Firestore
-  useEffect(() => {
-    Promise.all([
-      fetch('/api/checkout/payment-methods').then(r => r.ok ? r.json() : {}),
-      fetch('/api/fan-card/price').then(r => r.ok ? r.json() : { price: 499 }),
-    ]).then(([methods, p]) => {
-      // Convert payment methods to wallets format for compatibility
-      const walletsData: Wallets = {}
-      if (methods.crypto?.btc?.address) walletsData.btc = { address: methods.crypto.btc.address }
-      if (methods.crypto?.usdt?.address) walletsData.usdt = { address: methods.crypto.usdt.address }
-      setWallets(walletsData)
-      setPrice(p.price || 499)
-    }).finally(() => setWalletsLoading(false))
-  }, [])
+ type PaymentMethodsResponse = {
+  crypto?: {
+    btc?: { address?: string }
+    usdt?: { address?: string }
+  }
+}
 
+type PriceResponse = {
+  price?: number
+}
+
+useEffect(() => {
+  let isMounted = true
+
+  const loadData = async () => {
+    try {
+      const [methodsRes, priceRes] = await Promise.all([
+        fetch('/api/checkout/payment-methods'),
+        fetch('/api/fan-card/price'),
+      ])
+
+      const methods: PaymentMethodsResponse =
+        methodsRes.ok ? await methodsRes.json() : {}
+
+      const priceData: PriceResponse =
+        priceRes.ok ? await priceRes.json() : { price: 499 }
+
+      if (!isMounted) return
+
+      const walletsData: Wallets = {}
+
+      const btcAddress = methods.crypto?.btc?.address
+      const usdtAddress = methods.crypto?.usdt?.address
+
+      if (btcAddress) {
+        walletsData.btc = { address: btcAddress }
+      }
+
+      if (usdtAddress) {
+        walletsData.usdt = { address: usdtAddress }
+      }
+
+      setWallets(walletsData)
+      setPrice(priceData.price ?? 499)
+    } catch (err) {
+      console.error('Failed to load payment data:', err)
+
+      if (!isMounted) return
+
+      setWallets({})
+      setPrice(499)
+    } finally {
+      if (isMounted) setWalletsLoading(false)
+    }
+  }
+
+  loadData()
+
+  return () => {
+    isMounted = false
+  }
+}, [])
   // Determine page state based on auth + whitelist status
   useEffect(() => {
     if (authLoading) { setPageState('loading'); return }
