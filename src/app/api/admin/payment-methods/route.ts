@@ -25,7 +25,18 @@ export interface PaymentMethods {
   updatedBy: string
 }
 
-// GET all payment methods
+const DEFAULT_PAYMENT_METHODS: PaymentMethods = {
+  crypto: {
+    btc: { address: '', enabled: false },
+    usdt: { address: '', enabled: false },
+  },
+  stripe: { publishableKey: '', enabled: false },
+  paypal: { clientId: '', enabled: false },
+  cashapp: { handle: '', enabled: false },
+  updatedAt: new Date().toISOString(),
+  updatedBy: '',
+}
+
 export async function GET(req: NextRequest) {
   try {
     if (!await verifyAdminRequest(req)) {
@@ -34,27 +45,18 @@ export async function GET(req: NextRequest) {
 
     const db = getDb()
     const doc = await db.collection('settings').doc('paymentMethods').get()
-    
-    if (doc.exists) {
-      return NextResponse.json(doc.data())
+    if (!doc.exists) {
+      return NextResponse.json(DEFAULT_PAYMENT_METHODS)
     }
 
-    // Return default if not found
-    return NextResponse.json({
-      crypto: { btc: { address: '', enabled: false }, usdt: { address: '', enabled: false } },
-      stripe: { publishableKey: '', enabled: false },
-      paypal: { clientId: '', enabled: false },
-      cashapp: { handle: '', enabled: false },
-      updatedAt: new Date().toISOString(),
-      updatedBy: '',
-    })
+    const data = doc.data() || {}
+    return NextResponse.json({ ...DEFAULT_PAYMENT_METHODS, ...data })
   } catch (error: any) {
     console.error('[Payment Methods] GET error:', error)
     return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 })
   }
 }
 
-// UPDATE payment methods
 export async function POST(req: NextRequest) {
   try {
     if (!await verifyAdminRequest(req)) {
@@ -63,17 +65,16 @@ export async function POST(req: NextRequest) {
 
     const adminEmail = req.headers.get('x-admin-email') || 'admin@example.com'
     const data = await req.json()
-
-    const db = getDb()
     const payload: PaymentMethods = {
-      crypto: data.crypto || { btc: { address: '', enabled: false }, usdt: { address: '', enabled: false } },
-      stripe: data.stripe || { publishableKey: '', enabled: false },
-      paypal: data.paypal || { clientId: '', enabled: false },
-      cashapp: data.cashapp || { handle: '', enabled: false },
+      crypto: data.crypto || DEFAULT_PAYMENT_METHODS.crypto,
+      stripe: data.stripe || DEFAULT_PAYMENT_METHODS.stripe,
+      paypal: data.paypal || DEFAULT_PAYMENT_METHODS.paypal,
+      cashapp: data.cashapp || DEFAULT_PAYMENT_METHODS.cashapp,
       updatedAt: new Date().toISOString(),
       updatedBy: adminEmail,
     }
 
+    const db = getDb()
     await db.collection('settings').doc('paymentMethods').set(payload, { merge: true })
 
     console.log('[Payment Methods] Updated successfully by', adminEmail)

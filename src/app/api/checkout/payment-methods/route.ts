@@ -1,19 +1,19 @@
-import { adminDb } from '@/lib/firebase-admin'
 import { NextResponse } from 'next/server'
+import { getDb } from '@/lib/firestore'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const db = adminDb()
+    const db = getDb()
     const doc = await db.collection('settings').doc('paymentMethods').get()
 
     if (!doc.exists) {
       return NextResponse.json({
-        crypto: { btc: { enabled: false }, usdt: { enabled: false } },
-        paypal: { enabled: false },
-        stripe: { enabled: false },
-        cashapp: { enabled: false },
+        crypto: { btc: { address: '', enabled: false }, usdt: { address: '', enabled: false } },
+        paypal: { clientId: '', enabled: false },
+        stripe: { publishableKey: '', enabled: false },
+        cashapp: { handle: '', enabled: false },
       })
     }
 

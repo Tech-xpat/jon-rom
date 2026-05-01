@@ -23,14 +23,18 @@ interface Wallets {
 export default function CheckoutPage() {
   const { user, loading, getToken } = useUserAuth()
   const [paymentMethod, setPaymentMethod] = useState<'BTC' | 'USDT' | 'PayPal' | 'Stripe'>('USDT')
-  const [wallets, setWallets] = useState<Wallets>({})
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethods>({})
-  const [walletsLoading, setWalletsLoading] = useState(true)
+  const [dataLoading, setDataLoading] = useState(true)
   const [copied, setCopied] = useState(false)
   const [creating, setCreating] = useState(false)
   const [fanCardPrice, setFanCardPrice] = useState<number | null>(null)
   const [priceLoading, setPriceLoading] = useState(true)
   const [availableMethods, setAvailableMethods] = useState<string[]>([])
+  const selectedCryptoAddress = paymentMethod === 'USDT'
+    ? paymentMethods.crypto?.usdt?.address
+    : paymentMethod === 'BTC'
+      ? paymentMethods.crypto?.btc?.address
+      : undefined
 
   useEffect(() => {
     const loadPaymentData = async () => {
@@ -43,23 +47,16 @@ export default function CheckoutPage() {
           
           // Determine available payment methods
           const methods: string[] = []
-          if (methodsData.crypto?.btc?.enabled) methods.push('BTC')
-          if (methodsData.crypto?.usdt?.enabled) methods.push('USDT')
-          if (methodsData.paypal?.enabled) methods.push('PayPal')
-          if (methodsData.stripe?.enabled) methods.push('Stripe')
+          if (methodsData.crypto?.btc?.enabled && methodsData.crypto?.btc?.address) methods.push('BTC')
+          if (methodsData.crypto?.usdt?.enabled && methodsData.crypto?.usdt?.address) methods.push('USDT')
+          if (methodsData.paypal?.enabled && methodsData.paypal?.clientId) methods.push('PayPal')
+          if (methodsData.stripe?.enabled && methodsData.stripe?.publishableKey) methods.push('Stripe')
           setAvailableMethods(methods)
           
           // Set first available method as default
           if (methods.length > 0 && !methods.includes('USDT')) {
             setPaymentMethod(methods[0] as 'BTC' | 'USDT' | 'PayPal' | 'Stripe')
           }
-        }
-
-        // Load crypto wallets from existing endpoint
-        const walletsRes = await fetch('/api/checkout/wallets')
-        if (walletsRes.ok) {
-          const walletsData = await walletsRes.json()
-          setWallets(walletsData)
         }
 
         // Load fan card price from Firestore
@@ -73,7 +70,7 @@ export default function CheckoutPage() {
       } catch (err) {
         console.error('Failed to load payment data:', err)
       } finally {
-        setWalletsLoading(false)
+        setDataLoading(false)
         setPriceLoading(false)
       }
     }
@@ -196,18 +193,18 @@ export default function CheckoutPage() {
               key={paymentMethod}
               className="lg:col-span-2 bg-white/3 border border-white/5 rounded-2xl p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6"
             >
-              {walletsLoading ? (
+              {dataLoading || priceLoading ? (
                 <div className="text-center py-8 sm:py-12">
                   <div className="w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full animate-spin mx-auto" />
                 </div>
               ) : (
                 <>
-                  {paymentMethod === 'USDT' && wallets.usdt ? (
+                  {paymentMethod === 'USDT' && paymentMethods.crypto?.usdt?.enabled ? (
                     <>
                       <div>
                         <h3 className="text-white font-bold tracking-widest text-xs sm:text-sm mb-2 sm:mb-3">SEND USDT TO</h3>
                         <div className="bg-white/5 border border-white/10 rounded-lg p-3 sm:p-4 font-mono text-xs sm:text-sm text-gray-300 break-all mb-3">
-                          {wallets.usdt.address}
+                          {paymentMethods.crypto?.usdt.address}
                         </div>
                         {priceLoading ? (
                           <p className="text-gray-400 text-xs sm:text-sm mb-3">Loading current fan card price…</p>
@@ -217,7 +214,7 @@ export default function CheckoutPage() {
                           </p>
                         )}
                         <button
-                          onClick={() => handleCopyAddress(wallets.usdt?.address || '')}
+                          onClick={() => handleCopyAddress(paymentMethods.crypto?.usdt?.address || '')}
                           className="flex items-center gap-2 text-xs bg-white/10 hover:bg-white/20 text-gray-300 px-3 py-2 rounded-lg transition-colors"
                         >
                           {copied ? <Check size={14} /> : <Copy size={14} />}
@@ -237,15 +234,15 @@ export default function CheckoutPage() {
                         </div>
                       </div>
                     </>
-                  ) : paymentMethod === 'BTC' && wallets.btc ? (
+                  ) : paymentMethod === 'BTC' && paymentMethods.crypto?.btc ? (
                     <>
                       <div>
                         <h3 className="text-white font-bold tracking-widest text-sm mb-3">SEND BTC TO</h3>
                         <div className="bg-white/5 border border-white/10 rounded-lg p-4 font-mono text-sm text-gray-300 break-all mb-3">
-                          {wallets.btc.address}
+                          {paymentMethods.crypto?.usdt?.address}
                         </div>
                         <button
-                          onClick={() => handleCopyAddress(wallets.btc?.address || '')}
+                          onClick={() => handleCopyAddress(paymentMethods.crypto?.btc?.address || '')}
                           className="flex items-center gap-2 text-xs bg-white/10 hover:bg-white/20 text-gray-300 px-3 py-2 rounded-lg transition-colors"
                         >
                           {copied ? <Check size={14} /> : <Copy size={14} />}
@@ -294,7 +291,7 @@ export default function CheckoutPage() {
                   {(paymentMethod === 'USDT' || paymentMethod === 'BTC') && (
                     <button
                       onClick={handleCreatePayment}
-                      disabled={creating || priceLoading || fanCardPrice === null || !wallets[paymentMethod.toLowerCase() as keyof Wallets]}
+                      disabled={creating || priceLoading || fanCardPrice === null || ((paymentMethod === 'USDT' || paymentMethod === 'BTC') && !selectedCryptoAddress)}
                       className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-semibold transition-colors disabled:opacity-50"
                     >
                       {creating ? 'Creating Payment...' : 'I Have Sent Payment'}

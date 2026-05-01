@@ -470,13 +470,17 @@ export default function FanCardPage() {
     cardName.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0, 0x12345)
   ).toString().slice(0, 6).padStart(6, '0')}`
 
-  // Load wallets + price (public, no auth needed)
+  // Load payment methods + price from Firestore
   useEffect(() => {
     Promise.all([
-      fetch('/api/checkout/wallets').then(r => r.ok ? r.json() : {}),
+      fetch('/api/checkout/payment-methods').then(r => r.ok ? r.json() : {}),
       fetch('/api/fan-card/price').then(r => r.ok ? r.json() : { price: 499 }),
-    ]).then(([w, p]) => {
-      setWallets(w)
+    ]).then(([methods, p]) => {
+      // Convert payment methods to wallets format for compatibility
+      const walletsData: Wallets = {}
+      if (methods.crypto?.btc?.address) walletsData.btc = { address: methods.crypto.btc.address }
+      if (methods.crypto?.usdt?.address) walletsData.usdt = { address: methods.crypto.usdt.address }
+      setWallets(walletsData)
       setPrice(p.price || 499)
     }).finally(() => setWalletsLoading(false))
   }, [])
