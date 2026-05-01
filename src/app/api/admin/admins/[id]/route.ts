@@ -8,7 +8,7 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  if (!await verifyAdminRequest(req)) {
+  if (!(await verifyAdminRequest(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -20,8 +20,10 @@ export async function PUT(
       return NextResponse.json({ error: 'Role is required' }, { status: 400 })
     }
 
-    const updatedAdmin = await updateAdmin(adminId, { role })
-    return NextResponse.json(updatedAdmin)
+    await updateAdmin(adminId, { role })
+
+    // ✅ FIX: return success instead of undefined
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Failed to update admin:', error)
     return NextResponse.json({ error: 'Failed to update admin' }, { status: 500 })
@@ -32,13 +34,14 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  if (!await verifyAdminRequest(req)) {
+  if (!(await verifyAdminRequest(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
     const adminId = params.id
     await deleteAdmin(adminId)
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Failed to delete admin:', error)

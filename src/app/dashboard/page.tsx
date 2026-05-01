@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { LogOut, Clock, CheckCircle, AlertCircle, Download, QrCode, User, DollarSign, CreditCard } from 'lucide-react'
+import { LogOut, Clock, CheckCircle, AlertCircle, Download, QrCode, User, DollarSign, CreditCard, Gift } from 'lucide-react'
 import Link from 'next/link'
 import { useUserAuth } from '@/components/user/UserAuthProvider'
 import Header from '@/components/layout/Header'
@@ -251,6 +251,51 @@ export default function DashboardPage() {
                   <DollarSign size={18} />
                   Upgrade Now
                 </Link>
+              </motion.div>
+
+              {/* Reward Activity */}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white/3 border border-white/5 rounded-2xl p-8 mb-8">
+                <h2 className="text-white text-lg font-black tracking-widest mb-6">REWARD ACTIVITY</h2>
+
+                {txLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(2)].map((_, i) => (
+                      <div key={i} className="bg-white/3 rounded-lg h-20 animate-pulse" />
+                    ))}
+                  </div>
+                ) : transactions.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Gift size={32} className="mx-auto mb-2 opacity-50" />
+                    <p>No reward activity yet</p>
+                    <p className="text-gray-400 text-sm">Make a purchase or complete a review to earn points.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {transactions.map((tx) => (
+                      <motion.div key={tx.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white/5 border border-white/10 rounded-lg p-4 hover:border-white/20 transition-colors">
+                        <div className="flex items-center justify-between gap-4 mb-3">
+                          <div>
+                            <p className="text-white font-semibold text-sm">Fan Card Payment</p>
+                            <p className="text-gray-400 text-xs">{tx.currency} payment received</p>
+                          </div>
+                          <span className={`text-xs px-3 py-1 rounded-full font-semibold ${
+                            tx.status === 'confirmed'
+                              ? 'bg-green-900/30 text-green-400'
+                              : tx.status === 'pending'
+                                ? 'bg-yellow-900/30 text-yellow-400'
+                                : 'bg-red-900/30 text-red-400'
+                          }`}>
+                            {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between gap-4">
+                          <p className="text-gray-300 text-sm">{new Date(tx.createdAt).toLocaleDateString()}</p>
+                          <p className="text-green-400 font-bold">{tx.status === 'confirmed' ? '+50 pts' : '+0 pts'}</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
               </motion.div>
 
               {/* Transactions */}

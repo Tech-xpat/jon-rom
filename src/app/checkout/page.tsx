@@ -8,6 +8,13 @@ import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import Link from 'next/link'
 
+interface PaymentMethods {
+  crypto?: { btc?: { enabled: boolean; address?: string }; usdt?: { enabled: boolean; address?: string } }
+  paypal?: { enabled: boolean; clientId?: string }
+  stripe?: { enabled: boolean; publishableKey?: string }
+  cashapp?: { enabled: boolean; handle?: string }
+}
+
 interface Wallets {
   btc?: { address: string }
   usdt?: { address: string }
@@ -17,27 +24,61 @@ export default function CheckoutPage() {
   const { user, loading, getToken } = useUserAuth()
   const [paymentMethod, setPaymentMethod] = useState<'BTC' | 'USDT' | 'PayPal' | 'Stripe'>('USDT')
   const [wallets, setWallets] = useState<Wallets>({})
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethods>({})
   const [walletsLoading, setWalletsLoading] = useState(true)
   const [copied, setCopied] = useState(false)
   const [creating, setCreating] = useState(false)
-
-  const fanCardPrice = 4.99 // USD equivalent
+  const [fanCardPrice, setFanCardPrice] = useState<number | null>(null)
+  const [priceLoading, setPriceLoading] = useState(true)
+  const [availableMethods, setAvailableMethods] = useState<string[]>([])
 
   useEffect(() => {
-    const loadWallets = async () => {
+    const loadPaymentData = async () => {
       try {
-        const res = await fetch('/api/checkout/wallets')
-        if (res.ok) {
-          const data = await res.json()
-          setWallets(data)
+        // Load payment methods from Firestore
+        const methodsRes = await fetch('/api/checkout/payment-methods')
+        if (methodsRes.ok) {
+          const methodsData = await methodsRes.json()
+          setPaymentMethods(methodsData)
+          
+          // Determine available payment methods
+          const methods: string[] = []
+          if (methodsData.crypto?.btc?.enabled) methods.push('BTC')
+          if (methodsData.crypto?.usdt?.enabled) methods.push('USDT')
+          if (methodsData.paypal?.enabled) methods.push('PayPal')
+          if (methodsData.stripe?.enabled) methods.push('Stripe')
+          setAvailableMethods(methods)
+          
+          // Set first available method as default
+          if (methods.length > 0 && !methods.includes('USDT')) {
+            setPaymentMethod(methods[0] as 'BTC' | 'USDT' | 'PayPal' | 'Stripe')
+          }
+        }
+
+        // Load crypto wallets from existing endpoint
+        const walletsRes = await fetch('/api/checkout/wallets')
+        if (walletsRes.ok) {
+          const walletsData = await walletsRes.json()
+          setWallets(walletsData)
+        }
+
+        // Load fan card price from Firestore
+        const priceRes = await fetch('/api/checkout/fan-card-price')
+        if (priceRes.ok) {
+          const priceData = await priceRes.json()
+          if (typeof priceData.price === 'number') {
+            setFanCardPrice(Number((priceData.price / 100).toFixed(2)))
+          }
         }
       } catch (err) {
-        console.error('Failed to load wallets:', err)
+        console.error('Failed to load payment data:', err)
       } finally {
         setWalletsLoading(false)
+        setPriceLoading(false)
       }
     }
-    loadWallets()
+
+    loadPaymentData()
   }, [])
 
   if (loading) {
@@ -89,7 +130,7 @@ export default function CheckoutPage() {
         },
         body: JSON.stringify({
           currency: paymentMethod,
-          amount: fanCardPrice,
+          amount: fanCardPrice ?? 0,
         }),
       })
 
@@ -113,35 +154,38 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-black">
       <Header variant="main" />
 
-      <main className="pt-24 pb-16 px-4">
-        <div className="max-w-2xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-12">
-            <h1 className="text-white text-3xl font-black tracking-widest mb-2">APPLY FOR FAN CARD</h1>
-            <p className="text-gray-400">Complete your application with crypto payment</p>
+      <main className="pt-20 sm:pt-24 pb-16 px-4">
+        <div className="max-w-3xl mx-auto">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8 sm:mb-12">
+            <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-black tracking-widest mb-2">APPLY FOR FAN CARD</h1>
+            <p className="text-gray-400 text-sm sm:text-base">Complete your application with payment</p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
             {/* Payment Methods */}
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="md:col-span-1">
-              <h2 className="text-white font-bold tracking-widest text-sm mb-4">SELECT PAYMENT METHOD</h2>
-              <div className="space-y-3">
-                {(['USDT', 'BTC', 'PayPal', 'Stripe'] as const).map((method) => (
-                  <button
-                    key={method}
-                    onClick={() => setPaymentMethod(method)}
-                    className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-colors ${
-                      paymentMethod === method
-                        ? 'bg-red-900/20 border-red-600/50 text-red-400'
-                        : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20'
-                    }`}
-                  >
-                    {method === 'BTC' && <Bitcoin size={20} />}
-                    {method === 'USDT' && <Wallet size={20} />}
-                    {method === 'PayPal' && <CreditCard size={20} />}
-                    {method === 'Stripe' && <CreditCard size={20} />}
-                    <span className="font-semibold text-sm">{method}</span>
-                  </button>
-                ))}
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="lg:col-span-1">
+              <h2 className="text-white font-bold tracking-widest text-sm mb-3 sm:mb-4">SELECT PAYMENT METHOD</h2>
+              <div className="space-y-2 sm:space-y-3">
+                {availableMethods.length === 0 ? (
+                  <p className="text-gray-400 text-sm">No payment methods available. Please contact admin.</p>
+                ) : (
+                  availableMethods.map((method) => (
+                    <button
+                      key={method}
+                      onClick={() => setPaymentMethod(method as 'BTC' | 'USDT' | 'PayPal' | 'Stripe')}
+                      className={`w-full flex items-center gap-3 p-3 sm:p-4 rounded-lg border transition-colors text-sm sm:text-base ${
+                        paymentMethod === method
+                          ? 'bg-red-900/20 border-red-600/50 text-red-400'
+                          : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20'
+                      }`}
+                    >
+                      {method === 'BTC' && <Bitcoin size={18} className="flex-shrink-0" />}
+                      {method === 'USDT' && <Wallet size={18} className="flex-shrink-0" />}
+                      {(method === 'PayPal' || method === 'Stripe') && <CreditCard size={18} className="flex-shrink-0" />}
+                      <span className="font-semibold">{method}</span>
+                    </button>
+                  ))
+                )}
               </div>
             </motion.div>
 
@@ -150,10 +194,10 @@ export default function CheckoutPage() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               key={paymentMethod}
-              className="md:col-span-2 bg-white/3 border border-white/5 rounded-2xl p-8 space-y-6"
+              className="lg:col-span-2 bg-white/3 border border-white/5 rounded-2xl p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6"
             >
               {walletsLoading ? (
-                <div className="text-center py-12">
+                <div className="text-center py-8 sm:py-12">
                   <div className="w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full animate-spin mx-auto" />
                 </div>
               ) : (
@@ -161,10 +205,17 @@ export default function CheckoutPage() {
                   {paymentMethod === 'USDT' && wallets.usdt ? (
                     <>
                       <div>
-                        <h3 className="text-white font-bold tracking-widest text-sm mb-3">SEND USDT TO</h3>
-                        <div className="bg-white/5 border border-white/10 rounded-lg p-4 font-mono text-sm text-gray-300 break-all mb-3">
+                        <h3 className="text-white font-bold tracking-widest text-xs sm:text-sm mb-2 sm:mb-3">SEND USDT TO</h3>
+                        <div className="bg-white/5 border border-white/10 rounded-lg p-3 sm:p-4 font-mono text-xs sm:text-sm text-gray-300 break-all mb-3">
                           {wallets.usdt.address}
                         </div>
+                        {priceLoading ? (
+                          <p className="text-gray-400 text-xs sm:text-sm mb-3">Loading current fan card price…</p>
+                        ) : (
+                          <p className="text-gray-300 text-xs sm:text-sm mb-3">
+                            Amount to send: <span className="text-white font-bold">${fanCardPrice?.toFixed(2) ?? 'N/A'}</span>
+                          </p>
+                        )}
                         <button
                           onClick={() => handleCopyAddress(wallets.usdt?.address || '')}
                           className="flex items-center gap-2 text-xs bg-white/10 hover:bg-white/20 text-gray-300 px-3 py-2 rounded-lg transition-colors"
@@ -179,7 +230,7 @@ export default function CheckoutPage() {
                         <div className="text-sm text-blue-300">
                           <p className="font-semibold mb-1">Send Instructions:</p>
                           <ul className="space-y-1 text-xs">
-                            <li>• Amount: {fanCardPrice} USDT (ERC-20)</li>
+                            <li>• Amount: ${fanCardPrice?.toFixed(2) ?? '--'} USDT (ERC-20)</li>
                             <li>• Send to the address above</li>
                             <li>• Admin will confirm receipt within 24 hours</li>
                           </ul>
@@ -207,7 +258,7 @@ export default function CheckoutPage() {
                         <div className="text-sm text-orange-300">
                           <p className="font-semibold mb-1">Send Instructions:</p>
                           <ul className="space-y-1 text-xs">
-                            <li>• Amount: Check current BTC price</li>
+                            <li>• Amount: ${fanCardPrice?.toFixed(2) ?? '--'} BTC equivalent</li>
                             <li>• Send to the address above</li>
                             <li>• Admin will confirm receipt within 24 hours</li>
                           </ul>
@@ -243,7 +294,7 @@ export default function CheckoutPage() {
                   {(paymentMethod === 'USDT' || paymentMethod === 'BTC') && (
                     <button
                       onClick={handleCreatePayment}
-                      disabled={creating || !wallets[paymentMethod.toLowerCase() as keyof Wallets]}
+                      disabled={creating || priceLoading || fanCardPrice === null || !wallets[paymentMethod.toLowerCase() as keyof Wallets]}
                       className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-semibold transition-colors disabled:opacity-50"
                     >
                       {creating ? 'Creating Payment...' : 'I Have Sent Payment'}

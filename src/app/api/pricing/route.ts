@@ -38,8 +38,11 @@ export async function GET(req: NextRequest) {
 
   if (type === 'product') {
     const productId = req.nextUrl.searchParams.get('id')
-    if (productId && pricing.products[productId as any]) {
-      return NextResponse.json(pricing.products[productId as any])
+    if (productId) {
+      const productIdNum = parseInt(productId, 10) as keyof typeof pricing.products
+      if (productIdNum in pricing.products) {
+        return NextResponse.json(pricing.products[productIdNum])
+      }
     }
     return NextResponse.json({ error: 'Product not found' }, { status: 404 })
   }
@@ -63,11 +66,12 @@ export async function POST(req: NextRequest) {
     }
 
     if (type === 'product' && productId && typeof price === 'number') {
-      if (pricing.products[productId]) {
-        pricing.products[productId].price = price
+      const productIdNum = parseInt(productId, 10) as keyof typeof pricing.products
+      if (productIdNum in pricing.products) {
+        pricing.products[productIdNum].price = price
         return NextResponse.json({
           success: true,
-          product: pricing.products[productId],
+          product: pricing.products[productIdNum],
         })
       }
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })

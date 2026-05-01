@@ -26,7 +26,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-12 items-center">
               <div className="order-2 md:order-1">
                 <img
-                  src="/images/shop/WhatsApp Image 2026-04-23 at 19.13.27.jpeg"
+                  src="/images/shop/WhatsApp_Image_2026-04-23_at_19.13.27.jpeg"
                   alt="Store"
                   className="w-full h-48 sm:h-64 md:h-80 object-cover rounded-xl sm:rounded-2xl shadow-2xl"
                 />

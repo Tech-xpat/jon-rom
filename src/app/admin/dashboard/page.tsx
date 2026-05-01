@@ -23,7 +23,7 @@ interface DashboardStats {
 }
 
 export default function AdminDashboard() {
-  const { isAuthenticated } = useAdminAuth()
+  const { isAdmin } = useAdminAuth()
   const [stats, setStats] = useState<DashboardStats>({
     totalRevenue: 12450.50,
     totalOrders: 156,
@@ -32,7 +32,7 @@ export default function AdminDashboard() {
   })
   const [loading, setLoading] = useState(false)
 
-  if (!isAuthenticated) {
+  if (!isAdmin) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <p className="text-white">Admin access required</p>
