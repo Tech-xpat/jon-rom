@@ -198,3 +198,186 @@ export async function getPayments(): Promise<Payment[]> {
   const snap = await getDb().collection('payments').orderBy('createdAt', 'desc').get()
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Payment))
 }
+/* ───────────────── ADMIN WRITE OPS ───────────────── */
+
+export async function createAdmin(
+  email: string,
+  role: 'super-admin' | 'admin' | 'moderator' = 'admin'
+): Promise<Admin> {
+  const now = new Date().toISOString()
+
+  const ref = await getDb().collection('admins').add({
+    email,
+    role,
+    verified: true,
+    createdAt: now,
+  })
+
+  return { id: ref.id, email, role, verified: true, createdAt: now }
+}
+
+export async function updateAdmin(id: string, data: Partial<Admin>): Promise<void> {
+  await getDb().collection('admins').doc(id).update(data)
+}
+
+export async function deleteAdmin(id: string): Promise<void> {
+  await getDb().collection('admins').doc(id).delete()
+}
+
+/* ───────────────── USER OPS ───────────────── */
+
+export async function getUser(id: string): Promise<User | null> {
+  const doc = await getDb().collection('users').doc(id).get()
+  return doc.exists ? ({ id: doc.id, ...doc.data() } as User) : null
+}
+
+export async function getUserByEmail(email: string): Promise<User | null> {
+  const snap = await getDb().collection('users').where('email', '==', email).limit(1).get()
+  return snap.docs.length > 0
+    ? ({ id: snap.docs[0].id, ...snap.docs[0].data() } as User)
+    : null
+}
+
+export async function createUser(email: string, googleId?: string): Promise<User> {
+  const now = new Date().toISOString()
+
+  const ref = await getDb().collection('users').add({
+    email,
+    googleId,
+    whitelisted: false,
+    fanStatus: 'pending',
+    registeredAt: now,
+    paymentStatus: 'unpaid',
+  })
+
+  return {
+    id: ref.id,
+    email,
+    googleId,
+    whitelisted: false,
+    fanStatus: 'pending',
+    registeredAt: now,
+    paymentStatus: 'unpaid',
+  }
+}
+
+export async function updateUser(id: string, data: Partial<User>): Promise<void> {
+  await getDb().collection('users').doc(id).update(data)
+}
+
+/* ───────────────── PAYMENT OPS ───────────────── */
+
+export async function getPayment(id: string): Promise<Payment | null> {
+  const doc = await getDb().collection('payments').doc(id).get()
+  return doc.exists ? ({ id: doc.id, ...doc.data() } as Payment) : null
+}
+
+export async function createPayment(
+  data: Omit<Payment, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<Payment> {
+  const now = new Date().toISOString()
+
+  const ref = await getDb().collection('payments').add({
+    ...data,
+    createdAt: now,
+    updatedAt: now,
+  })
+
+  return { id: ref.id, ...data, createdAt: now, updatedAt: now }
+}
+
+export async function confirmPayment(paymentId: string, transactionId: string): Promise<void> {
+  await getDb().collection('payments').doc(paymentId).update({
+    status: 'confirmed',
+    transactionId,
+    updatedAt: new Date().toISOString(),
+  })
+}
+
+/* ───────────────── CRYPTO WALLETS ───────────────── */
+
+export interface CryptoWallet {
+  id: string
+  type: 'BTC' | 'USDT'
+  address: string
+  verified: boolean
+  updatedAt: string
+  updatedBy: string
+}
+
+export async function getCryptoWallets(): Promise<CryptoWallet[]> {
+  const snap = await getDb().collection('cryptoWallets').get()
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as CryptoWallet))
+}
+
+export async function setCryptoWallet(
+  type: 'BTC' | 'USDT',
+  address: string,
+  updatedBy: string
+): Promise<void> {
+  const snap = await getDb()
+    .collection('cryptoWallets')
+    .where('type', '==', type)
+    .limit(1)
+    .get()
+
+  if (!snap.empty) {
+    await getDb().collection('cryptoWallets').doc(snap.docs[0].id).update({
+      address,
+      updatedAt: new Date().toISOString(),
+      updatedBy,
+    })
+  } else {
+    await getDb().collection('cryptoWallets').add({
+      type,
+      address,
+      verified: false,
+      updatedAt: new Date().toISOString(),
+      updatedBy,
+    })
+  }
+}
+
+/* ───────────────── PAGE CONTENT ───────────────── */
+
+export interface PageContent {
+  id: string
+  section: string
+  content: string
+  image?: string
+  updatedAt: string
+  updatedBy: string
+}
+
+export async function getAllPageContent(): Promise<PageContent[]> {
+  const snap = await getDb().collection('pageContent').get()
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as PageContent))
+}
+
+export async function updatePageContent(
+  section: string,
+  data: Partial<PageContent>,
+  updatedBy: string
+): Promise<void> {
+  const snap = await getDb()
+    .collection('pageContent')
+    .where('section', '==', section)
+    .limit(1)
+    .get()
+
+  if (!snap.empty) {
+    await getDb().collection('pageContent').doc(snap.docs[0].id).update({
+      ...data,
+      section,
+      updatedAt: new Date().toISOString(),
+      updatedBy,
+    })
+  } else {
+    await getDb().collection('pageContent').add({
+      section,
+      ...data,
+      updatedAt: new Date().toISOString(),
+      updatedBy,
+    })
+  }
+}
