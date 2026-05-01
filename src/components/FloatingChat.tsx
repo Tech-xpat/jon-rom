@@ -11,7 +11,7 @@ interface Message {
   timestamp: Date
 }
 
-const WHATSAPP_NUMBER = '1234567890' // Admin to update this
+const WHATSAPP_NUMBER = '252697996987'
 
 const siteKnowledge = {
   shop: {
@@ -141,7 +141,7 @@ export default function FloatingChat() {
     setMessages((prev) => [...prev, systemMessage])
 
     setTimeout(() => {
-      const message = encodeURIComponent('Hi! I need support from the Jonathan Roumie team.')
+      const message = encodeURIComponent('hello, J.R support, I need help')
       const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`
       window.open(whatsappUrl, '_blank')
 

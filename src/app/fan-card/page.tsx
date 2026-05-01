@@ -464,6 +464,7 @@ export default function FanCardPage() {
   const [loginLoading, setLoginLoading] = useState(false)
 
   const cardRef = useRef<HTMLDivElement>(null)
+  const canDownload = pageState === 'whitelisted'
 
   const memberId = `JR-${Math.abs(
     cardName.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0, 0x12345)
@@ -534,7 +535,16 @@ export default function FanCardPage() {
   }
 
   const handleExport = async () => {
-    if (!cardName.trim()) { alert('Enter your name to engrave on the card first.'); return }
+    if (!cardName.trim()) {
+      alert('Enter your name to engrave on the card first.')
+      return
+    }
+
+    if (pageState !== 'whitelisted') {
+      alert('Downloads are only available after payment is verified and approved by admin. Please complete payment and wait for approval before downloading your Fan Card.')
+      return
+    }
+
     setExporting(true)
     try {
       const { default: html2canvas } = await import('html2canvas')
@@ -545,8 +555,11 @@ export default function FanCardPage() {
       const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [85.6, 53.98] })
       pdf.addImage(imgData, 'PNG', 0, 0, 85.6, 53.98)
       pdf.save(`JonathanRoumie-Fan-Card-${cardName.replace(/\s+/g, '-')}.pdf`)
-    } catch (err) { console.error(err) }
-    finally { setExporting(false) }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setExporting(false)
+    }
   }
 
   return (
@@ -594,11 +607,16 @@ export default function FanCardPage() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleExport}
-                    disabled={!cardName || exporting}
+                    disabled={!cardName || exporting || !canDownload}
                     className="flex-1 bg-jcvd-red hover:bg-red-700 text-white py-3 rounded-xl font-bold tracking-widest transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     <Download size={18} />
-                    {exporting ? 'Exporting...' : 'Export'}
+                    {exporting
+                      ? 'Exporting...'
+                      : canDownload
+                        ? 'Download Card'
+                        : 'Download after approval'
+                    }
                   </motion.button>
                 </div>
               </motion.div>
