@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyAdminRequest } from '@/lib/firebase-admin'
+import { verifyAdminRequest, getDecodedToken } from '@/lib/firebase-admin'
 import { getDb } from '@/lib/firestore'
 
 export const dynamic = 'force-dynamic'
@@ -38,7 +38,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const adminEmail = req.headers.get('x-admin-email') || 'admin'
+    const decodedToken = await getDecodedToken(req)
+    const adminEmail = decodedToken?.email || 'admin'
     const { productId, price, name, category, description } = await req.json()
 
     if (!productId || price === undefined) {
@@ -72,7 +73,8 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const adminEmail = req.headers.get('x-admin-email') || 'admin'
+    const decodedToken = await getDecodedToken(req)
+    const adminEmail = decodedToken?.email || 'admin'
     const { price } = await req.json()
 
     if (price === undefined) {

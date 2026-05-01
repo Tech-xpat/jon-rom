@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyAdminRequest } from '@/lib/firebase-admin'
+import { verifyAdminRequest, getDecodedToken } from '@/lib/firebase-admin'
 import { getDb } from '@/lib/firestore'
 
 export const dynamic = 'force-dynamic'
@@ -63,7 +63,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const adminEmail = req.headers.get('x-admin-email') || 'admin@example.com'
+    const decodedToken = await getDecodedToken(req)
+    const adminEmail = decodedToken?.email || 'admin@example.com'
     const data = await req.json()
     const payload: PaymentMethods = {
       crypto: data.crypto || DEFAULT_PAYMENT_METHODS.crypto,
