@@ -267,7 +267,9 @@ export default function WalletsPage() {
                     </motion.button>
                   </div>
                 </motion.div>
-              )))
+              ))
+            )}
+          </div>
 
           {/* Summary */}
           <motion.div
