@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
       amount,
       currency,
       status: 'pending',
+       waybill: waybill || false,
       shippingAddress: shippingAddress?.trim() || '',
       createdAt: new Date().toISOString(),
     })
