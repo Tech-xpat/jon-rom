@@ -6,19 +6,24 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   try {
     const db = getDb()
-    const doc = await db.collection('settings').doc('paymentMethods').get()
+    
+    // Get crypto wallets from the centralized location
+    const walletsDoc = await db.collection('pageSettings').doc('cryptoWallets').get()
+    const walletsData = walletsDoc.exists ? walletsDoc.data() : {}
 
-    if (!doc.exists) {
-      return NextResponse.json({
-        crypto: { btc: { address: '', enabled: false }, usdt: { address: '', enabled: false } },
-        paypal: { clientId: '', enabled: false },
-        stripe: { publishableKey: '', enabled: false },
-        cashapp: { handle: '', enabled: false },
-      })
-    }
+    // Combine with any other payment methods if needed
+    const paymentMethodsDoc = await db.collection('settings').doc('paymentMethods').get()
+    const paymentData = paymentMethodsDoc.exists ? paymentMethodsDoc.data() : {}
 
-    const data = doc.data() || {}
-    return NextResponse.json(data)
+    return NextResponse.json({
+      crypto: {
+        btc: walletsData.btc || { address: '', enabled: false },
+        usdt: walletsData.usdt || { address: '', enabled: false },
+      },
+      paypal: paymentData.paypal || { clientId: '', enabled: false },
+      stripe: paymentData.stripe || { publishableKey: '', enabled: false },
+      cashapp: paymentData.cashapp || { handle: '', enabled: false },
+    })
   } catch (error: any) {
     console.error('Failed to fetch payment methods:', error)
     return NextResponse.json(

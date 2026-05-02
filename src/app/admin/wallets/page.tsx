@@ -2,9 +2,17 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Copy, Check, Edit2, Save, X, AlertCircle } from 'lucide-react'
-import { useAdminAuth } from '@/components/admin/AdminAuthProvider'
+import { Copy, Check, Edit2, Save, X, AlertCircle, Loader2 } from 'lucide-react'
+import { useFirestoreListener } from '@/hooks/useFirestoreListener'
+import { useFirestoreSync } from '@/hooks/useFirestoreSync'
 import AdminHeader from '@/components/admin/AdminHeader'
+
+interface CryptoWalletsData {
+  btc?: { address: string; verified?: boolean }
+  usdt?: { address: string; verified?: boolean }
+  updatedAt?: string
+  updatedBy?: string
+}
 
 interface Wallet {
   id: string
@@ -16,108 +24,68 @@ interface Wallet {
 }
 
 export default function WalletsPage() {
-  const { isAdmin, getToken } = useAdminAuth()
+  const { data: firestoreWallets, loading: loadingWallets, error: listenerError } = useFirestoreListener<CryptoWalletsData>('pageSettings', 'cryptoWallets')
+  const { sync, isSyncing, error: syncError } = useFirestoreSync('pageSettings')
+  
   const [wallets, setWallets] = useState<Wallet[]>([
-    {
-      id: 'BTC',
-      name: 'Bitcoin (BTC)',
-      type: 'BTC',
-      address: '',
-      icon: '₿',
-      active: true,
-    },
-    {
-      id: 'USDT',
-      name: 'USDT (Ethereum)',
-      type: 'USDT',
-      address: '',
-      icon: 'Ⓥ',
-      active: true,
-    },
+    { id: 'BTC', name: 'Bitcoin (BTC)', type: 'BTC', address: '', icon: '₿', active: true },
+    { id: 'USDT', name: 'USDT (Ethereum)', type: 'USDT', address: '', icon: 'Ⓥ', active: true },
   ])
-  const [loadingWallets, setLoadingWallets] = useState(true)
-  const [savingWallet, setSavingWallet] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [notification, setNotification] = useState<string | null>(null)
+  const [notificationType, setNotificationType] = useState<'success' | 'error'>('success')
 
-  const loadWallets = async () => {
-    setLoadingWallets(true)
-    try {
-      const token = await getToken()
-      const res = await fetch('/api/admin/wallets', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      if (!res.ok) {
-        throw new Error('Failed to fetch wallet settings')
-      }
-      const data = await res.json()
+  // Sync Firestore data to local state
+  useEffect(() => {
+    if (firestoreWallets) {
+      console.log('[Wallets] Syncing Firestore data to state:', firestoreWallets)
       setWallets([
         {
           id: 'BTC',
           name: 'Bitcoin (BTC)',
           type: 'BTC',
-          address: data.btc?.address || '',
+          address: firestoreWallets.btc?.address || '',
           icon: '₿',
-          active: Boolean(data.btc?.address),
+          active: Boolean(firestoreWallets.btc?.address),
         },
         {
           id: 'USDT',
           name: 'USDT (Ethereum)',
           type: 'USDT',
-          address: data.usdt?.address || '',
+          address: firestoreWallets.usdt?.address || '',
           icon: 'Ⓥ',
-          active: Boolean(data.usdt?.address),
+          active: Boolean(firestoreWallets.usdt?.address),
         },
       ])
-    } catch (error) {
-      console.error('[Wallets] Load failed:', error)
-    } finally {
-      setLoadingWallets(false)
     }
-  }
+  }, [firestoreWallets])
 
   const saveWallet = async (id: string) => {
     const wallet = wallets.find((w) => w.id === id)
     if (!wallet) return
 
-    setSavingWallet(true)
     try {
-      const token = await getToken()
-      const res = await fetch('/api/admin/wallets', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          type: wallet.type,
-          address: wallet.address,
-        }),
+      console.log(`[Wallets] Saving ${wallet.type} wallet:`, wallet.address)
+      
+      // Save directly to Firestore using sync hook
+      const key = wallet.type.toLowerCase()
+      await sync('cryptoWallets', {
+        [key]: { address: wallet.address, verified: false },
+        updatedAt: new Date().toISOString(),
       })
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Unable to save wallet')
-      }
 
-      setNotification(`${wallet.name} updated successfully`)
+      setNotification(`${wallet.name} updated successfully!`)
+      setNotificationType('success')
       setEditingId(null)
       setTimeout(() => setNotification(null), 3000)
-      await loadWallets()
     } catch (error: any) {
       console.error('[Wallets] Save failed:', error)
       setNotification(error.message || 'Failed to update wallet')
+      setNotificationType('error')
       setTimeout(() => setNotification(null), 3000)
-    } finally {
-      setSavingWallet(false)
     }
-  }
-
-  const toggleActive = (id: string) => {
-    setWallets(wallets.map((w) => (w.id === id ? { ...w, active: !w.active } : w)))
   }
 
   const handleCopy = (address: string, id: string) => {
@@ -136,19 +104,6 @@ export default function WalletsPage() {
     await saveWallet(id)
   }
 
-  useEffect(() => {
-    if (!isAdmin) return
-    loadWallets()
-  }, [isAdmin])
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <p className="text-white">Admin access required</p>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-black">
       <AdminHeader />
@@ -161,13 +116,52 @@ export default function WalletsPage() {
         >
           <div>
             <h1 className="text-white text-4xl font-black tracking-widest mb-2">PAYMENT WALLETS</h1>
-            <p className="text-gray-400">Manage all transaction wallet addresses in one place</p>
+            <p className="text-gray-400">Manage all transaction wallet addresses in one place. Changes update instantly!</p>
           </div>
+
+          {/* Notification */}
+          {notification && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className={`flex items-center gap-3 rounded-lg p-4 ${
+                notificationType === 'success'
+                  ? 'bg-green-900/20 border border-green-800/50'
+                  : 'bg-red-900/20 border border-red-800/50'
+              }`}
+            >
+              {notificationType === 'success' ? (
+                <Check size={18} className="text-green-400" />
+              ) : (
+                <AlertCircle size={18} className="text-red-400" />
+              )}
+              <p className={notificationType === 'success' ? 'text-green-300' : 'text-red-300'}>
+                {notification}
+              </p>
+            </motion.div>
+          )}
+
+          {/* Listener Error */}
+          {listenerError && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-start gap-3 bg-red-900/20 border border-red-800/50 rounded-lg p-4"
+            >
+              <AlertCircle size={18} className="flex-shrink-0 mt-0.5 text-red-400" />
+              <div>
+                <p className="text-red-300 text-sm font-medium">Connection Error</p>
+                <p className="text-red-400/80 text-xs mt-1">{listenerError}</p>
+              </div>
+            </motion.div>
+          )}
 
           <div className="space-y-4">
             {loadingWallets ? (
-              <div className="bg-white/5 border border-white/10 rounded-xl p-8 text-center text-gray-400">
-                Loading wallet configuration…
+              <div className="bg-white/5 border border-white/10 rounded-xl p-8 text-center">
+                <Loader2 size={24} className="text-red-500 animate-spin mx-auto mb-2" />
+                <p className="text-gray-400">Loading wallet configuration…</p>
               </div>
             ) : (
               wallets.map((wallet, idx) => (
@@ -196,16 +190,17 @@ export default function WalletsPage() {
                             type="text"
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
+                            placeholder="Enter wallet address"
                             className="flex-1 bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
                           />
                           <button
                             type="button"
                             onClick={() => handleSave(wallet.id)}
-                            disabled={savingWallet}
+                            disabled={isSyncing}
                             className="bg-green-600 hover:bg-green-700 disabled:bg-green-700/60 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors disabled:cursor-not-allowed"
                           >
                             <Save size={18} />
-                            {savingWallet ? 'Saving…' : 'SAVE'}
+                            {isSyncing ? 'Saving…' : 'SAVE'}
                           </button>
                           <button
                             type="button"
@@ -217,7 +212,7 @@ export default function WalletsPage() {
                         </div>
                       ) : (
                         <div className="bg-black/30 rounded-lg px-4 py-3 font-mono text-sm text-gray-300 break-all">
-                          {wallet.address}
+                          {wallet.address || <span className="text-gray-500 italic">Not configured</span>}
                         </div>
                       )}
                     </div>
@@ -229,7 +224,8 @@ export default function WalletsPage() {
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => handleCopy(wallet.address, wallet.id)}
-                            className="text-gray-400 hover:text-blue-400 transition-colors p-2"
+                            disabled={!wallet.address}
+                            className="text-gray-400 hover:text-blue-400 transition-colors p-2 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {copiedId === wallet.id ? (
                               <Check size={20} className="text-green-400" />
@@ -249,42 +245,22 @@ export default function WalletsPage() {
                       )}
                     </div>
                   </div>
-
-                  {/* Active Status Toggle */}
-                  <div className="mt-4 flex items-center justify-between pt-4 border-t border-white/10">
-                    <span className="text-gray-400 text-xs tracking-widest">STATUS</span>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => toggleActive(wallet.id)}
-                      className={`px-4 py-2 rounded-lg font-bold text-xs tracking-widest transition-all ${
-                        wallet.active
-                          ? 'bg-green-600/20 text-green-400 border border-green-500/50'
-                          : 'bg-red-600/20 text-red-400 border border-red-500/50'
-                      }`}
-                    >
-                      {wallet.active ? 'ACTIVE' : 'INACTIVE'}
-                    </motion.button>
-                  </div>
                 </motion.div>
               ))
             )}
           </div>
 
-          {/* Summary */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-blue-900/20 border border-blue-500/50 rounded-xl p-6 flex items-start gap-3"
-          >
-            <AlertCircle size={20} className="text-blue-400 flex-shrink-0 mt-1" />
-            <div>
-              <h3 className="text-white font-bold mb-2">ACTIVE WALLETS: {wallets.filter(w => w.active).length}</h3>
-              <p className="text-gray-400 text-sm">
-                All payment methods update across the website in real-time. Deactivate wallets to remove them from checkout.
-              </p>
-            </div>
+          {/* Real-time Sync Status */}
+          <div className="rounded-lg bg-white/5 border border-white/10 p-4">
+            <p className="text-gray-400 text-xs">
+              ✓ Real-time sync enabled. All changes save to Firestore and update across the site instantly.
+            </p>
+          </div>
+        </motion.div>
+      </main>
+    </div>
+  )
+}
           </motion.div>
         </motion.div>
       </main>

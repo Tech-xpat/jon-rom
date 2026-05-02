@@ -32,12 +32,20 @@ export interface FanCardSettings {
   accentColor: string
   logoUrl: string
   footerText: string
+  antiScreenshot?: boolean
+  updatedAt?: string
+  updatedBy?: string
 }
 
 export interface SiteSettings {
   announcementBar: string
   contactEmail: string
   socialLinks: { facebook: string; twitter: string; instagram: string; youtube: string }
+  whatsappNumber: string
+  cashappHandle: string
+  venmoHandle: string
+  updatedAt?: string
+  updatedBy?: string
 }
 
 // ─── Products ─────────────────────────────────────────────────────────────────
@@ -91,15 +99,19 @@ const DEFAULT_FAN_CARD: FanCardSettings = {
   accentColor: '#FF0000',
   logoUrl: '/images/jvcd-avatar.jpg',
   footerText: 'OFFICIAL JONATHAN ROUMIE WORLD FAN CARD',
+  antiScreenshot: true,
 }
 
 export async function getFanCardSettings(): Promise<FanCardSettings> {
-  const doc = await getDb().collection('settings').doc('fanCard').get()
+  const doc = await getDb().collection('pageSettings').doc('fanCard').get()
   return doc.exists ? (doc.data() as FanCardSettings) : DEFAULT_FAN_CARD
 }
 
 export async function updateFanCardSettings(data: Partial<FanCardSettings>): Promise<void> {
-  await getDb().collection('settings').doc('fanCard').set(data, { merge: true })
+  await getDb().collection('pageSettings').doc('fanCard').set(
+    { ...data, updatedAt: new Date().toISOString() },
+    { merge: true }
+  )
 }
 
 // ─── Site Settings ────────────────────────────────────────────────────────────
@@ -107,15 +119,21 @@ const DEFAULT_SITE: SiteSettings = {
   announcementBar: 'Officially Licensed Jonathan Roumie Merchandise',
   contactEmail: 'contact@jonathanroumieworld.com',
   socialLinks: { facebook: '#', twitter: '#', instagram: '#', youtube: '#' },
+  whatsappNumber: '',
+  cashappHandle: '',
+  venmoHandle: '',
 }
 
 export async function getSiteSettings(): Promise<SiteSettings> {
-  const doc = await getDb().collection('settings').doc('site').get()
+  const doc = await getDb().collection('pageSettings').doc('siteSettings').get()
   return doc.exists ? (doc.data() as SiteSettings) : DEFAULT_SITE
 }
 
 export async function updateSiteSettings(data: Partial<SiteSettings>): Promise<void> {
-  await getDb().collection('settings').doc('site').set(data, { merge: true })
+  await getDb().collection('pageSettings').doc('siteSettings').set(
+    { ...data, updatedAt: new Date().toISOString() },
+    { merge: true }
+  )
 }
 
 // ─── New Admin & Payment Collections ──────────────────────────────────────────
@@ -345,32 +363,56 @@ export async function updatePayment(id: string, data: Partial<Payment>): Promise
 }
 
 // ─── Crypto Wallet Management ──────────────────────────────────────────────────
-export async function getCryptoWallets(): Promise<CryptoWallet[]> {
-  const snap = await getDb().collection('cryptoWallets').get()
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as CryptoWallet))
+// Wallet data is stored in pageSettings/cryptoWallets document for real-time sync
+
+export interface CryptoWalletsData {
+  btc?: { address: string; verified?: boolean }
+  usdt?: { address: string; verified?: boolean }
+  updatedAt?: string
+  updatedBy?: string
 }
 
-export async function getCryptoWallet(type: 'BTC' | 'USDT'): Promise<CryptoWallet | null> {
-  const snap = await getDb().collection('cryptoWallets').where('type', '==', type).limit(1).get()
-  return snap.docs.length > 0 ? ({ id: snap.docs[0].id, ...snap.docs[0].data() } as CryptoWallet) : null
+export async function getCryptoWallets(): Promise<CryptoWalletsData> {
+  try {
+    const doc = await getDb().collection('pageSettings').doc('cryptoWallets').get()
+    return doc.exists ? (doc.data() as CryptoWalletsData) : { btc: { address: '' }, usdt: { address: '' } }
+  } catch (error) {
+    console.error('[Firestore] Error fetching crypto wallets:', error)
+    return { btc: { address: '' }, usdt: { address: '' } }
+  }
+}
+
+export async function getCryptoWallet(type: 'BTC' | 'USDT'): Promise<{ address: string; verified: boolean } | null> {
+  try {
+    const data = await getCryptoWallets()
+    const wallet = data[type.toLowerCase() as keyof CryptoWalletsData] as any
+    return wallet ? { address: wallet.address || '', verified: wallet.verified || false } : null
+  } catch (error) {
+    console.error('[Firestore] Error fetching crypto wallet:', error)
+    return null
+  }
 }
 
 export async function setCryptoWallet(type: 'BTC' | 'USDT', address: string, updatedBy: string): Promise<void> {
-  const existing = await getCryptoWallet(type)
-  if (existing) {
-    await getDb().collection('cryptoWallets').doc(existing.id).update({
-      address,
+  try {
+    const key = type.toLowerCase()
+    await getDb().collection('pageSettings').doc('cryptoWallets').update({
+      [key]: { address, verified: false },
       updatedAt: new Date().toISOString(),
       updatedBy,
     })
-  } else {
-    await getDb().collection('cryptoWallets').add({
-      type,
-      address,
-      verified: false,
-      updatedAt: new Date().toISOString(),
-      updatedBy,
-    })
+  } catch (error: any) {
+    // If document doesn't exist, create it
+    if (error.code === 'not-found' || error.message?.includes('No document')) {
+      const key = type.toLowerCase()
+      await getDb().collection('pageSettings').doc('cryptoWallets').set({
+        [key]: { address, verified: false },
+        updatedAt: new Date().toISOString(),
+        updatedBy,
+      }, { merge: true })
+    } else {
+      throw error
+    }
   }
 }
 
