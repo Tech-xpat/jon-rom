@@ -12,10 +12,9 @@ interface HeaderProps {
 
 const navLinks = [
   { name: 'HOME', path: '/' },
-  { name: 'SHOP', path: '/shop' },
-  { name: 'FAN CARD', path: '/fan-card' },
-  { name: 'REWARDS', path: '/rewards' },
-  { name: 'CONTACT', path: '/contact' },
+  { name: 'SHOP', path: 'https://shop.jonathanroumie.site' },
+  { name: 'FANS', path: 'https://fans.jonathanroumie.site' },
+  { name: 'ADMIN', path: 'https://admin.jonathanroumie.site' },
 ]
 
 export default function Header({ variant = 'main' }: HeaderProps) {
@@ -100,6 +99,8 @@ export default function Header({ variant = 'main' }: HeaderProps) {
                     key={link.name}
                     href={link.path}
                     onClick={() => setIsMenuOpen(false)}
+                    target={link.path.startsWith('http') ? '_blank' : undefined}
+                    rel={link.path.startsWith('http') ? 'noopener noreferrer' : undefined}
                     className={`text-white text-lg tracking-[0.4em] hover:text-jcvd-red transition-colors ${
                       pathname === link.path ? 'text-jcvd-red' : ''
                     }`}
