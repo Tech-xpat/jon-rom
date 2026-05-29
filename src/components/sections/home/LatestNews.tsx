@@ -2,17 +2,45 @@
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { ArrowRight } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
-const newsItems = [
-  { id: 1, image: '/images/news/hallows-lent-pray40.jfif', title: 'Latest Jonathan Roumie Updates', date: 'Today' },
-  { id: 2, image: '/images/news/news-2.jfif', title: 'Exclusive Behind The Scenes', date: 'Yesterday' },
-  { id: 3, image: '/images/news/news-3.jfif', title: 'New Content Release', date: '2 days ago' },
-  { id: 4, image: '/images/news/news-4.jfif', title: 'Community Highlights', date: '3 days ago' },
-  { id: 5, image: '/images/news/rosie-roumie.jfif', title: 'Fan Spotlight', date: '4 days ago' },
-  { id: 6, image: '/images/news/special-message.jfif', title: 'Special Announcement', date: '5 days ago' },
+const fallbackNewsItems = [
+  { id: 1, image: '/images/gallery/gallery-1.jpg', title: 'Latest Jonathan Roumie Updates', date: 'Today' },
+  { id: 2, image: '/images/gallery/gallery-2.jpg', title: 'Exclusive Behind The Scenes', date: 'Yesterday' },
+  { id: 3, image: '/images/gallery/gallery-3.jpg', title: 'New Content Release', date: '2 days ago' },
+  { id: 4, image: '/images/gallery/gallery-4.jpg', title: 'Community Highlights', date: '3 days ago' },
+  { id: 5, image: '/images/gallery/gallery-5.jpg', title: 'Fan Spotlight', date: '4 days ago' },
+  { id: 6, image: '/images/gallery/gallery-6.jpg', title: 'Special Announcement', date: '5 days ago' },
 ]
 
 export default function LatestNews() {
+  const [newsItems, setNewsItems] = useState(fallbackNewsItems)
+
+  useEffect(() => {
+    let mounted = true
+
+    fetch('/api/gallery')
+      .then((res) => res.json())
+      .then((data) => {
+        if (!mounted || !Array.isArray(data)) return
+
+        const galleryItems = data.slice(0, 6).map((item: any, index: number) => ({
+          id: item.id ?? index + 1,
+          image: item.src || '/images/gallery/gallery-1.jpg',
+          title: item.alt || `Gallery update ${index + 1}`,
+          date: ['Today', 'Yesterday', '2 days ago', '3 days ago', '4 days ago', '5 days ago'][index] || 'Recently',
+        }))
+
+        setNewsItems(galleryItems)
+      })
+      .catch(() => {
+        if (mounted) setNewsItems(fallbackNewsItems)
+      })
+
+    return () => {
+      mounted = false
+    }
+  }, [])
   return (
     <section className="bg-gradient-to-b from-black to-black/90 py-12 sm:py-16 md:py-20 px-4 border-t border-white/5">
       <div className="max-w-6xl mx-auto">

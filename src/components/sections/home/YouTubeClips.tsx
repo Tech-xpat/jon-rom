@@ -3,29 +3,29 @@ import { motion } from 'framer-motion'
 import { Play, ExternalLink } from 'lucide-react'
 
 const clips = [
-  { 
-    id: 1, 
-    image: '/images/clips/Jonathan Roumie.jfif', 
-    title: 'EXCLUSIVE SCENE', 
-    url: 'https://youtube.com/@JonathanRoumie' 
+  {
+    id: 1,
+    image: '/images/clips/Jonathan Roumie.jfif',
+    title: 'EXCLUSIVE TRAILER',
+    url: 'https://youtu.be/0pioowzlZ-o?si=7s2M89NdwIb2E_Pl',
   },
-  { 
-    id: 2, 
-    image: '/images/clips/download (1).jfif', 
-    title: 'BEHIND THE SCENES', 
-    url: 'https://youtube.com/@JonathanRoumie' 
+  {
+    id: 2,
+    image: '/images/clips/download (1).jfif',
+    title: 'BEHIND THE SCENES',
+    url: 'https://youtu.be/sTEgHOa3Ph0?si=5U-9vBayvLMJiqkD',
   },
-  { 
-    id: 3, 
-    image: '/images/clips/download (2).jfif', 
-    title: 'ACTION HIGHLIGHTS', 
-    url: 'https://youtube.com/@JonathanRoumie' 
+  {
+    id: 3,
+    image: '/images/clips/download (2).jfif',
+    title: 'ACTION HIGHLIGHTS',
+    url: 'https://youtu.be/wVH2q6i0ttY?si=N8PL10c-Oh3fWUdN',
   },
-  { 
-    id: 4, 
-    image: '/images/clips/download (4).jfif', 
-    title: 'FEATURED CLIPS', 
-    url: 'https://youtube.com/@JonathanRoumie' 
+  {
+    id: 4,
+    image: '/images/clips/download (4).jfif',
+    title: 'FEATURED CLIPS',
+    url: 'https://youtu.be/C_DTl2ERz3c?si=3I2J9S2_AuPKFOHO',
   },
 ]
 
