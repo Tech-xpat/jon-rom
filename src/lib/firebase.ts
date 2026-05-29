@@ -5,13 +5,11 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithRedirect,
-  getRedirectResult,
   signInAnonymously,
   signOut,
   setPersistence,
   browserLocalPersistence,
   onAuthStateChanged,
-  UserCredential,
 } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
@@ -25,14 +23,11 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 }
 
-let app: any = null
-
-if (typeof window !== 'undefined') {
-  app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig)
-}
-
-export const signInWithGoogle = loginWithGoogleRedirect
-export const getGoogleRedirectResult = async () => null
+const app = typeof window !== 'undefined'
+  ? getApps().length
+    ? getApps()[0]
+    : initializeApp(firebaseConfig)
+  : null
 
 export const auth = app ? getAuth(app) : null
 export const db = app ? getFirestore(app) : null
@@ -45,20 +40,15 @@ if (provider) {
 }
 
 if (auth) {
-  setPersistence(auth, browserLocalPersistence).catch(() => {})
+  void setPersistence(auth, browserLocalPersistence).catch(() => {})
 }
 
-// 🔥 ONLY ONE LOGIN FUNCTION
 export async function loginWithGoogleRedirect(): Promise<void> {
   if (!auth || !provider) throw new Error('Firebase not initialized')
   await signInWithRedirect(auth, provider)
 }
 
-// 🔥 OPTIONAL (only if you want redirect result debugging)
-export async function handleRedirectResult(): Promise<UserCredential | null> {
-  if (!auth) return null
-  return await getRedirectResult(auth)
-}
+export const signInWithGoogle = loginWithGoogleRedirect
 
 export function onAuthChange(callback: (user: any) => void) {
   if (!auth) {

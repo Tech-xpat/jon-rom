@@ -8,6 +8,26 @@ const nextConfig = {
     ],
   },
 
+  async rewrites() {
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'admin.jonathanroumie.site' }],
+        destination: '/admin/:path*',
+      },
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'shop.jonathanroumie.site' }],
+        destination: '/shop/:path*',
+      },
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'fans.jonathanroumie.site' }],
+        destination: '/fan-card/:path*',
+      },
+    ]
+  },
+
   async headers() {
     return [
       {
