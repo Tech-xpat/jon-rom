@@ -9,11 +9,11 @@ export async function GET() {
     
     // Get crypto wallets from the centralized location
     const walletsDoc = await db.collection('pageSettings').doc('cryptoWallets').get()
-    const walletsData = walletsDoc.exists ? walletsDoc.data() : {}
+    const walletsData = (walletsDoc.exists ? walletsDoc.data() : {}) as Record<string, any>
 
     // Combine with any other payment methods if needed
     const paymentMethodsDoc = await db.collection('settings').doc('paymentMethods').get()
-    const paymentData = paymentMethodsDoc.exists ? paymentMethodsDoc.data() : {}
+    const paymentData = (paymentMethodsDoc.exists ? paymentMethodsDoc.data() : {}) as Record<string, any>
 
     return NextResponse.json({
       crypto: {

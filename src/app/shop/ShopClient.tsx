@@ -8,16 +8,19 @@ import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 
 interface Product {
-  id: number
+  id: string | number
   image: string
   name: string
   price: number
   stock: number
   description: string
+  category?: string
 }
 
+const shopHeroImage = '/images/shop/WhatsApp_Image_2026-04-23_at_19.13.27.jpeg'
+
 const productDefaults: Product[] = [
-  { id: 1, image: '/images/shop/WhatsApp_Image_2026-04-23_at_19.13.27.jpeg', name: 'Premium T-Shirt Black', price: 29.99, stock: 45, description: 'Exclusive Jonathan Roumie Collection' },
+  { id: 1, image: shopHeroImage, name: 'Premium T-Shirt Black', price: 29.99, stock: 45, description: 'Exclusive Jonathan Roumie Collection' },
   { id: 2, image: '/images/shop/WhatsApp_Image_2026-04-23_at_19.13.27_(1).jpeg', name: 'Premium T-Shirt White', price: 29.99, stock: 38, description: 'Classic Design' },
   { id: 3, image: '/images/shop/WhatsApp_Image_2026-04-23_at_19.13.28.jpeg', name: 'Signature Hoodie', price: 59.99, stock: 22, description: 'Comfortable & Premium Quality' },
   { id: 4, image: '/images/shop/WhatsApp_Image_2026-04-23_at_19.13.28_(1).jpeg', name: 'Signature Hoodie Alt', price: 59.99, stock: 19, description: 'Limited Edition' },
@@ -41,23 +44,34 @@ type CheckoutStep = 'cart' | 'customer' | 'payment' | 'confirmation' | 'loader'
 export default function ShopClient() {
   const [products, setProducts] = useState<Product[]>(productDefaults)
   const [cart, setCart] = useState<CartItem[]>([])
-  const [wishlist, setWishlist] = useState<number[]>([])
+  const [wishlist, setWishlist] = useState<Array<string | number>>([])
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [checkoutStep, setCheckoutStep] = useState<CheckoutStep>('cart')
-  const [selectedQuantity, setSelectedQuantity] = useState<{ [key: number]: number }>({})
+  const [selectedQuantity, setSelectedQuantity] = useState<Record<string, number>>({})
   const [isLoading, setIsLoading] = useState(false)
 
   // Fetch real-time product prices
   useEffect(() => {
     const fetchPrices = async () => {
       try {
-        const res = await fetch('/api/pricing?type=products')
-        const pricingData = await res.json()
-        
-        setProducts(productDefaults.map(product => ({
-          ...product,
-          price: pricingData[product.id]?.price || product.price
-        })))
+        const res = await fetch('/api/products')
+        if (res.ok) {
+          const productsData = await res.json()
+          if (Array.isArray(productsData) && productsData.length > 0) {
+            setProducts(productsData.map((product: any) => ({
+              id: product.id,
+              image: product.image || shopHeroImage,
+              name: product.name,
+              price: Number(product.price || 0),
+              stock: product.stock || 99,
+              description: product.description || 'Exclusive Jonathan Roumie merchandise',
+              category: product.category,
+            })))
+            return
+          }
+        }
+
+        setProducts(productDefaults)
       } catch (error) {
         console.error('Failed to fetch product prices:', error)
       }
@@ -100,7 +114,7 @@ export default function ShopClient() {
     setSelectedQuantity({ ...selectedQuantity, [product.id]: 1 })
   }
 
-  const toggleWishlist = (productId: number) => {
+  const toggleWishlist = (productId: string | number) => {
     setWishlist(prev =>
       prev.includes(productId)
         ? prev.filter(id => id !== productId)
@@ -108,11 +122,11 @@ export default function ShopClient() {
     )
   }
 
-  const removeFromCart = (productId: number) => {
+  const removeFromCart = (productId: string | number) => {
     setCart(cart.filter(item => item.id !== productId))
   }
 
-  const updateQuantity = (productId: number, quantity: number) => {
+  const updateQuantity = (productId: string | number, quantity: number) => {
     const product = cart.find(item => item.id === productId)
     if (product && quantity > 0 && quantity <= product.stock) {
       setCart(cart.map(item =>
@@ -216,7 +230,7 @@ export default function ShopClient() {
         <section className="relative mb-8 sm:mb-12">
           <div className="relative w-full h-48 sm:h-64 md:h-80">
             <img
-              src="/images/shop/WhatsApp Image 2026-04-23 at 19.13.27.jpeg"
+              src={shopHeroImage}
               alt="Shop Collection"
               className="w-full h-full object-cover"
             />

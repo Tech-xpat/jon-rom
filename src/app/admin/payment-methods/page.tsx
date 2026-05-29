@@ -77,7 +77,30 @@ export default function AdminPaymentMethodsPage() {
     setSaving(true)
     setError('')
     setSuccess('')
-  
+
+    try {
+      const payload = {
+        btc: {
+          address: methods.crypto.btc.address,
+          verified: Boolean(methods.crypto.btc.address),
+        },
+        usdt: {
+          address: methods.crypto.usdt.address,
+          verified: Boolean(methods.crypto.usdt.address),
+        },
+        updatedAt: new Date().toISOString(),
+        updatedBy: 'admin',
+      }
+
+      await syncCryptoWallets('cryptoWallets', payload, { merge: false })
+      setSuccess('Crypto wallets saved successfully.')
+    } catch (err: any) {
+      setError(err.message || 'Failed to save wallets.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (loadingWallets) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">

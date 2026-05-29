@@ -5,12 +5,10 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   try {
     const wallets = await getCryptoWallets()
-    const btc = wallets.find((w) => w.type === 'BTC')
-    const usdt = wallets.find((w) => w.type === 'USDT')
 
     return Response.json({
-      btc: btc ? { address: btc.address } : null,
-      usdt: usdt ? { address: usdt.address } : null,
+      btc: wallets.btc ? { address: wallets.btc.address } : null,
+      usdt: wallets.usdt ? { address: wallets.usdt.address } : null,
     })
   } catch (error: any) {
     console.error('Get wallets error:', error)

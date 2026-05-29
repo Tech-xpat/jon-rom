@@ -17,7 +17,7 @@ interface Product {
 }
 
 export default function AdminProductsPage() {
-  const { user, isAdmin, loading } = useAdminAuth()
+  const { user, isAdmin, loading, getToken } = useAdminAuth()
   const router = useRouter()
   const [products, setProducts] = useState<Product[]>([])
   const [loadingProducts, setLoadingProducts] = useState(true)
@@ -44,10 +44,17 @@ export default function AdminProductsPage() {
 
   const loadProducts = async () => {
     try {
-      const res = await fetch('/api/products')
+      const token = await getToken()
+      const res = await fetch('/api/admin/products', {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      })
+
       if (res.ok) {
         const data = await res.json()
-        setProducts(data)
+        setProducts(Array.isArray(data) ? data : [])
+      } else {
+        const errData = await res.json().catch(() => ({}))
+        setError(errData.error || 'Failed to load products')
       }
     } catch (err) {
       setError('Failed to load products')
@@ -78,8 +85,10 @@ export default function AdminProductsPage() {
         form.append('image', formData.image)
       }
 
+      const token = await getToken()
       const res = await fetch('/api/admin/products/add', {
         method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         body: form,
       })
 
@@ -101,7 +110,11 @@ export default function AdminProductsPage() {
     if (!confirm('Delete this product?')) return
 
     try {
-      const res = await fetch(`/api/admin/products/${id}`, { method: 'DELETE' })
+      const token = await getToken()
+      const res = await fetch(`/api/admin/products?id=${id}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      })
       if (res.ok) {
         loadProducts()
       }

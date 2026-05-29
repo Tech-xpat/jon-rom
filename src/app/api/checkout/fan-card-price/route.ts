@@ -5,9 +5,9 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const db = getDb() // ✅ safest option
+    const db = getDb()
 
-    const doc = await db.collection('settings').doc('fanCard').get()
+    const doc = await db.collection('pageSettings').doc('fanCard').get()
 
     if (!doc.exists) {
       return NextResponse.json({ price: 2999 })

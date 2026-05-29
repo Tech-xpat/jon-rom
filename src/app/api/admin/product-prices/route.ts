@@ -13,7 +13,7 @@ export interface ProductPrice {
   updatedAt: string
 }
 
-// GET all product prices
+// GET all product prices from the canonical products collection.
 export async function GET(req: NextRequest) {
   try {
     if (!await verifyAdminRequest(req)) {
@@ -21,9 +21,13 @@ export async function GET(req: NextRequest) {
     }
 
     const db = getDb()
-    const snap = await db.collection('productPrices').orderBy('name').get()
-    const products = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-    
+    const snap = await db.collection('products').orderBy('createdAt', 'desc').get()
+    const products = snap.docs.map(doc => ({
+      id: doc.id,
+      ...(doc.data() as Record<string, any>),
+      price: typeof doc.data().price === 'number' ? doc.data().price : Number(doc.data().price || 0),
+    }))
+
     return NextResponse.json(products)
   } catch (error: any) {
     console.error('[Product Prices] GET error:', error)
@@ -47,16 +51,19 @@ export async function POST(req: NextRequest) {
     }
 
     const db = getDb()
+    const existing = await db.collection('products').doc(productId).get()
     const payload = {
-      name: name || productId,
+      name: name || existing.data()?.name || productId,
       price: Math.round(price * 100), // Convert to cents
-      category: category || 'general',
-      description: description || '',
+      category: category || existing.data()?.category || 'general',
+      description: description || existing.data()?.description || '',
+      inStock: existing.data()?.inStock ?? true,
+      image: existing.data()?.image || '/images/shop/WhatsApp_Image_2026-04-23_at_19.13.27.jpeg',
       updatedAt: new Date().toISOString(),
       updatedBy: adminEmail,
     }
 
-    await db.collection('productPrices').doc(productId).set(payload, { merge: true })
+    await db.collection('products').doc(productId).set(payload, { merge: true })
 
     console.log(`[Product Prices] Updated ${productId} by ${adminEmail}`)
     return NextResponse.json({ success: true, message: 'Product price updated' })
@@ -82,11 +89,11 @@ export async function PUT(req: NextRequest) {
     }
 
     const db = getDb()
-    await db.collection('settings').doc('fanCard').update({
+    await db.collection('pageSettings').doc('fanCard').set({
       price: Math.round(price * 100),
       updatedAt: new Date().toISOString(),
       updatedBy: adminEmail,
-    })
+    }, { merge: true })
 
     console.log(`[Fan Card Price] Updated to ${price} by ${adminEmail}`)
     return NextResponse.json({ success: true, message: 'Fan card price updated', price: Math.round(price * 100) })

@@ -4,12 +4,12 @@ import Image from 'next/image'
 import { ArrowRight } from 'lucide-react'
 
 const newsItems = [
-  { id: 1, image: '/images/hero/download (6).jfif', title: 'Latest Jonathan Roumie Updates', date: 'Today' },
-  { id: 2, image: '/images/hero/Jonathan Roumie.jpeg', title: 'Exclusive Behind The Scenes', date: 'Yesterday' },
-  { id: 3, image: '/images/clips/download (1).jfif', title: 'New Content Release', date: '2 days ago' },
-  { id: 4, image: '/images/clips/Jonathan Roumie.jfif', title: 'Community Highlights', date: '3 days ago' },
-  { id: 5, image: '/images/hero/Johnathan Roumie.jfif', title: 'Fan Spotlight', date: '4 days ago' },
-  { id: 6, image: '/images/fans/download (1).jfif', title: 'Special Announcement', date: '5 days ago' },
+  { id: 1, image: '/images/news/hallows-lent-pray40.jfif', title: 'Latest Jonathan Roumie Updates', date: 'Today' },
+  { id: 2, image: '/images/news/news-2.jfif', title: 'Exclusive Behind The Scenes', date: 'Yesterday' },
+  { id: 3, image: '/images/news/news-3.jfif', title: 'New Content Release', date: '2 days ago' },
+  { id: 4, image: '/images/news/news-4.jfif', title: 'Community Highlights', date: '3 days ago' },
+  { id: 5, image: '/images/news/rosie-roumie.jfif', title: 'Fan Spotlight', date: '4 days ago' },
+  { id: 6, image: '/images/news/special-message.jfif', title: 'Special Announcement', date: '5 days ago' },
 ]
 
 export default function LatestNews() {

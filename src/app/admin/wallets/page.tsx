@@ -261,9 +261,3 @@ export default function WalletsPage() {
     </div>
   )
 }
-          </motion.div>
-        </motion.div>
-      </main>
-    </div>
-  )
-}

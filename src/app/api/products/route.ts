@@ -7,35 +7,10 @@ export async function GET() {
   try {
     const db = getDb() // ✅ FIX: never null
 
-    const snapshot = await db.collection('productPrices').get()
+    const snapshot = await db.collection('products').get()
 
     if (snapshot.empty) {
-      return NextResponse.json([
-        {
-          id: 'fan-card',
-          name: 'Jonathan Roumie Fan Card',
-          description: 'Exclusive personalized fan card with your name',
-          price: 29.99,
-          image: '/images/hero/download (6).jfif',
-          category: 'cards',
-        },
-        {
-          id: 'merchandise',
-          name: 'Exclusive Merchandise Bundle',
-          description: 'Limited edition Jonathan Roumie merchandise',
-          price: 49.99,
-          image: '/images/hero/download (6).jfif',
-          category: 'merchandise',
-        },
-        {
-          id: 'vip-pass',
-          name: 'VIP Event Pass',
-          description: 'Access to exclusive VIP events and meet-and-greets',
-          price: 99.99,
-          image: '/images/hero/download (6).jfif',
-          category: 'events',
-        },
-      ])
+      return NextResponse.json([])
     }
 
     const products = snapshot.docs.map(doc => {
@@ -44,10 +19,8 @@ export async function GET() {
         id: doc.id,
         name: data.name || 'Unnamed Product',
         description: data.description || '',
-        price: typeof data.price === 'number'
-          ? Number((data.price / 100).toFixed(2))
-          : data.price || 0,
-        image: data.image || '/images/hero/download (6).jfif',
+        price: typeof data.price === 'number' ? Number(data.price.toFixed(2)) : Number(data.price || 0),
+        image: data.image || '/images/shop/WhatsApp_Image_2026-04-23_at_19.13.27.jpeg',
         category: data.category || 'general',
       }
     })
@@ -56,31 +29,6 @@ export async function GET() {
   } catch (error: any) {
     console.error('Failed to fetch products:', error)
 
-    return NextResponse.json([
-      {
-        id: 'fan-card',
-        name: 'Jonathan Roumie Fan Card',
-        description: 'Exclusive personalized fan card with your name',
-        price: 29.99,
-        image: '/images/hero/download (6).jfif',
-        category: 'cards',
-      },
-      {
-        id: 'merchandise',
-        name: 'Exclusive Merchandise Bundle',
-        description: 'Limited edition Jonathan Roumie merchandise',
-        price: 49.99,
-        image: '/images/hero/download (6).jfif',
-        category: 'merchandise',
-      },
-      {
-        id: 'vip-pass',
-        name: 'VIP Event Pass',
-        description: 'Access to exclusive VIP events and meet-and-greets',
-        price: 99.99,
-        image: '/images/hero/download (6).jfif',
-        category: 'events',
-      },
-    ])
+    return NextResponse.json([])
   }
 }
