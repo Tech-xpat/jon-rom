@@ -159,7 +159,7 @@ export default function FanCardSection() {
 
             {/* CTA Button */}
             <Link
-              href="https://fans.jonathanroumie.site"
+              href="/fans"
               className="inline-flex items-center gap-2 sm:gap-3 bg-gradient-to-r from-jcvd-red to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg sm:rounded-xl font-bold tracking-widest transition-all text-sm sm:text-base group w-full sm:w-auto justify-center"
             >
               <Sparkles size={18} />

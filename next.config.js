@@ -9,23 +9,7 @@ const nextConfig = {
   },
 
   async redirects() {
-    return [
-      {
-        source: '/admin',
-        destination: 'https://admin.jonathanroumie.site',
-        permanent: true,
-      },
-      {
-        source: '/shop',
-        destination: 'https://shop.jonathanroumie.site',
-        permanent: true,
-      },
-      {
-        source: '/fan-card',
-        destination: 'https://fans.jonathanroumie.site',
-        permanent: true,
-      },
-    ]
+    return []
   },
 
   async rewrites() {
