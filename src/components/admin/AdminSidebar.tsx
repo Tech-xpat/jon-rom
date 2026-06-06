@@ -3,20 +3,17 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, Image, CreditCard, Settings, LogOut, Shield, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Package, Image, CreditCard, Settings, LogOut, Shield, Menu, X, ShoppingCart } from 'lucide-react'
 import { useAdminAuth } from './AdminAuthProvider'
 
 const nav = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/products', label: 'Products', icon: Package },
   { href: '/admin/gallery', label: 'Gallery', icon: Image },
-  { href: '/admin/fan-card', label: 'Fan Card', icon: CreditCard },
-  { href: '/admin/users', label: 'Users & Whitelist', icon: Shield },
+  { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/admin/payments', label: 'Payments', icon: CreditCard },
-  { href: '/admin/wallets', label: 'Crypto Wallets', icon: Package },
-  { href: '/admin/rewards', label: 'Rewards', icon: Package },
+  { href: '/admin/users', label: 'Users & Whitelist', icon: Shield },
   { href: '/admin/admins', label: 'Admin Users', icon: Shield },
-  { href: '/admin/catalog', label: 'Catalog Content', icon: Image },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 

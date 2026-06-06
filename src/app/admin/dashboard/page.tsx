@@ -86,10 +86,10 @@ export default function AdminDashboard() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: 'PRICING', href: '/admin/pricing', icon: DollarSign },
-              { label: 'WALLETS', href: '/admin/wallets', icon: ShoppingCart },
+              { label: 'CENTRAL SETTINGS', href: '/admin/settings', icon: Settings },
+              { label: 'PAYMENTS', href: '/admin/payments', icon: DollarSign },
               { label: 'ORDERS', href: '/admin/orders', icon: BarChart3 },
-              { label: 'SETTINGS', href: '/admin/settings', icon: Settings },
+              { label: 'USERS', href: '/admin/users', icon: ShoppingCart },
             ].map((item, idx) => (
               <motion.a
                 key={item.label}
@@ -144,7 +144,7 @@ export default function AdminDashboard() {
           <div>
             <h3 className="text-white font-bold mb-2">ADMIN STATUS</h3>
             <p className="text-gray-400 text-sm">
-              You are logged in as an administrator. Use the navigation above to manage pricing, payment wallets, orders, and settings. All changes are applied in real-time.
+              You are logged in as an administrator. Use the central settings page to manage pricing, payment handles, product prices, and admin access from one route. All changes are applied in real-time.
             </p>
           </div>
         </motion.div>

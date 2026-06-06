@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Save, AlertCircle, CheckCircle, Phone, Globe, Loader2, Check, } from 'lucide-react'
+import { Save, AlertCircle, CheckCircle, Phone, Globe, Loader2, Check, DollarSign, Shield } from 'lucide-react'
 import { useFirestoreListener } from '@/hooks/useFirestoreListener'
 import { useFirestoreSync } from '@/hooks/useFirestoreSync'
 import AdminHeader from '@/components/admin/AdminHeader'
+import { useAdminAuth } from '@/components/admin/AdminAuthProvider'
 
 interface SiteSettings {
   announcementBar: string
@@ -17,6 +18,7 @@ interface SiteSettings {
 }
 
 export default function AdminSettingsPage() {
+  const { getToken } = useAdminAuth()
   // Real-time listeners
   const { data: firestoreSettings, loading } = useFirestoreListener<SiteSettings>('pageSettings', 'siteSettings')
   const { sync, isSyncing, error: syncError } = useFirestoreSync('pageSettings')
@@ -31,20 +33,54 @@ export default function AdminSettingsPage() {
   })
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [fanCardPrice, setFanCardPrice] = useState('4.99')
+  const [productPrices, setProductPrices] = useState<Array<{ id: string; name: string; price: number; category: string; description: string; priceUsd: string }>>([])
+  const [pricingSaving, setPricingSaving] = useState(false)
 
   // Sync Firestore data to local state
   useEffect(() => {
     if (firestoreSettings) {
-      console.log('[Admin Settings] Syncing Firestore data:', firestoreSettings)
       setSettings(firestoreSettings)
       setError(null)
     }
   }, [firestoreSettings])
 
+  useEffect(() => {
+    const loadPricing = async () => {
+      try {
+        const token = await getToken()
+        const res = await fetch('/api/admin/product-prices', {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        if (!res.ok) return
+
+        const data = await res.json()
+        const fanCard = data.find((item: any) => item.id === 'fan-card') || null
+        if (fanCard) setFanCardPrice((fanCard.price / 100).toFixed(2))
+
+        const products = data.filter((item: any) => item.id !== 'fan-card')
+        setProductPrices(
+          products.map((item: any) => ({
+            id: item.id,
+            name: item.name || 'Product',
+            price: Number(item.price || 0),
+            category: item.category || 'general',
+            description: item.description || '',
+            priceUsd: (Number(item.price || 0) / 100).toFixed(2),
+          }))
+        )
+      } catch (err) {
+        console.error('[Admin Settings] Failed to load pricing data', err)
+      }
+    }
+
+    loadPricing()
+  }, [getToken])
+
   const handleSave = async () => {
     try {
       setError(null)
-      console.log('[Admin Settings] Saving settings:', settings)
       await sync('siteSettings', settings)
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
@@ -52,6 +88,45 @@ export default function AdminSettingsPage() {
       console.error('[Admin Settings] Save failed:', err)
       setError(err.message || 'Failed to save settings')
       setTimeout(() => setError(null), 3000)
+    }
+  }
+
+  const handleSavePricing = async () => {
+    try {
+      setPricingSaving(true)
+      setError(null)
+      const token = await getToken()
+
+      await fetch('/api/admin/product-prices', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ price: Number(fanCardPrice) || 0 }),
+      })
+
+      await Promise.all(
+        productPrices.map((item) =>
+          fetch('/api/admin/product-prices', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              productId: item.id,
+              price: Number(item.priceUsd) || 0,
+              name: item.name,
+              category: item.category,
+              description: item.description,
+            }),
+          })
+        )
+      )
+
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    } catch (err: any) {
+      console.error('[Admin Settings] Pricing save failed:', err)
+      setError(err.message || 'Failed to update pricing')
+      setTimeout(() => setError(null), 3000)
+    } finally {
+      setPricingSaving(false)
     }
   }
 
@@ -142,6 +217,77 @@ export default function AdminSettingsPage() {
             </div>
           </motion.div>
 
+          {/* Central pricing and payment controls */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white/5 border border-white/10 rounded-2xl p-8 space-y-6"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <DollarSign size={24} className="text-red-400" />
+              <div>
+                <h2 className="text-white text-2xl font-black">PRICING & PAYMENT CONTROLS</h2>
+                <p className="text-gray-400 text-sm">Manage the live fan-card price, product prices, and payment handles from this single admin route.</p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="bg-black/40 border border-white/10 rounded-xl p-4">
+                <label className="text-white font-bold text-sm tracking-widest block mb-2">FAN CARD PRICE (USD)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={fanCardPrice}
+                  onChange={(e) => setFanCardPrice(e.target.value)}
+                  className="w-full bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-red-500"
+                />
+              </div>
+              <div className="bg-black/40 border border-white/10 rounded-xl p-4">
+                <label className="text-white font-bold text-sm tracking-widest block mb-2">PAYMENT HANDLES</label>
+                <p className="text-gray-400 text-sm">CashApp and Venmo are controlled below and update wherever the site reads them.</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {productPrices.map((item) => (
+                <div key={item.id} className="bg-black/40 border border-white/10 rounded-xl p-4">
+                  <div className="flex items-center justify-between gap-4 mb-2">
+                    <div>
+                      <p className="text-white font-semibold">{item.name}</p>
+                      <p className="text-gray-400 text-xs">{item.category}</p>
+                    </div>
+                    <div className="flex items-center gap-2 text-red-400 text-sm font-semibold">
+                      <span>$</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={item.priceUsd}
+                        onChange={(e) =>
+                          setProductPrices((prev) =>
+                            prev.map((entry) => (entry.id === item.id ? { ...entry, priceUsd: e.target.value } : entry))
+                          )
+                        }
+                        className="w-24 bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-red-500"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-gray-400 text-xs">{item.description || 'Shop product pricing is synced to the public store instantly.'}</p>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={handleSavePricing}
+              disabled={pricingSaving}
+              className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-gray-600 disabled:to-gray-600 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2"
+            >
+              {pricingSaving ? <><Loader2 size={18} className="animate-spin" /> SAVING PRICES...</> : <>SAVE PRICING</>}
+            </button>
+          </motion.div>
+
           {/* Payment Methods */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -205,11 +351,29 @@ export default function AdminSettingsPage() {
             </div>
           </motion.div>
 
-          {/* Site Settings */}
+          {/* Admin management quick links */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
+            className="bg-white/5 border border-white/10 rounded-2xl p-8 space-y-4"
+          >
+            <div className="flex items-center gap-3">
+              <Shield size={24} className="text-cyan-400" />
+              <h2 className="text-white text-2xl font-black">ADMIN MANAGEMENT</h2>
+            </div>
+            <p className="text-gray-400 text-sm">Use the admin user controls and settings pages from this single hub to manage access and site configuration.</p>
+            <div className="grid gap-3 md:grid-cols-2">
+              <a href="/admin/admins" className="rounded-xl border border-white/10 bg-black/40 p-4 text-white hover:bg-white/5 transition-colors">Admin users</a>
+              <a href="/admin/users" className="rounded-xl border border-white/10 bg-black/40 p-4 text-white hover:bg-white/5 transition-colors">User approvals & whitelist</a>
+            </div>
+          </motion.div>
+
+          {/* Site Settings */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
             className="bg-white/5 border border-white/10 rounded-2xl p-8 space-y-6"
           >
             <div className="flex items-center gap-3 mb-6">

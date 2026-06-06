@@ -462,6 +462,7 @@ export default function FanCardPage() {
   
   // Real-time listener for crypto wallets
   const { data: firestoreWallets, loading: walletsLoading } = useFirestoreListener<CryptoWalletsData>('pageSettings', 'cryptoWallets')
+  const { data: fanCardSettings, loading: priceLoadingFirestore } = useFirestoreListener<{ price?: number }>('pageSettings', 'fanCard')
 
   const [pageState, setPageState] = useState<PageState>('loading')
   const [submittedEmail, setSubmittedEmail] = useState('')
@@ -496,22 +497,15 @@ export default function FanCardPage() {
     }
   }, [firestoreWallets])
 
-  // Load price from API (cached, not real-time for now)
+  // Sync the fan-card price directly from admin-controlled Firestore settings.
   useEffect(() => {
-    const loadPrice = async () => {
-      try {
-        const res = await fetch('/api/fan-card/price')
-        if (res.ok) {
-          const data = await res.json()
-          setPrice(data.price ?? 499)
-        }
-      } catch (error) {
-        console.error('Failed to load price:', error)
-      }
+    if (fanCardSettings?.price !== undefined) {
+      setPrice(Number(fanCardSettings.price) || 499)
+      return
     }
 
-    loadPrice()
-  }, [])
+    setPrice(499)
+  }, [fanCardSettings])
   // Determine page state based on auth + whitelist status
   useEffect(() => {
     if (authLoading) { setPageState('loading'); return }
