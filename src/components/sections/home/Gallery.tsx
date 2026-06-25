@@ -22,8 +22,11 @@ export default function Gallery() {
       <div className="grid grid-cols-2 gap-1 max-w-2xl mx-auto">
         {galleryImages.map((image, index) => (
           <motion.div key={image.id} initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3, delay: index * 0.05 }} viewport={{ once: true }} className="relative group cursor-pointer overflow-hidden aspect-square">
-            <Image src={image.src} alt={image.alt} fill className="object-cover transition-transform duration-300 group-hover:scale-110" />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300 flex items-center justify-center">
+            <Image 
+  src={image.src} 
+  alt={image.alt} 
+  fill 
+  className="object-cover object-center group-hover:scale-110 transition-transform duration-700" sizes="(max-width: 768px) 50vw, 25vw"/>            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300 flex items-center justify-center">
               <span className="text-white text-xs tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300">JONATHAN <span className="font-normal">ROUMIE</span></span>
             </div>
           </motion.div>
