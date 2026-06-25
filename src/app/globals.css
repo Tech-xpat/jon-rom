@@ -35,3 +35,12 @@
   background: rgba(255, 0, 0, 0.3);
   color: white;
 }
+.hero-image {
+  object-position: center 22%; /* Default face focus */
+}
+
+@media (max-width: 768px) {
+  .hero-image {
+    object-position: center 30%; /* Mobile adjustment */
+  }
+}
