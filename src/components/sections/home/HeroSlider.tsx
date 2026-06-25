@@ -40,13 +40,14 @@ export default function HeroSlider({ slides = defaultSlides }: { slides?: Slide[
           transition={{ duration: 0.5 }}
           className="absolute inset-0"
         >
-          <Image
-            src={slides[currentSlide].image}
-            alt={slides[currentSlide].title}
-            fill
-            className="object-cover"
-            priority={currentSlide === 0}
-          />
+<img
+  src={slides[currentSlide].image}
+  alt={slides[currentSlide].title}
+  className="w-full h-full object-cover object-center md:object-[center_20%] transition-all duration-700"  // Key: object-position focus on upper body/face
+  style={{
+    objectPosition: 'center 20%'  // Adjust per image if needed (20-35% top bias for portraits)
+  }}
+/>
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
             <motion.h1
