@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -40,12 +41,16 @@ export default function HeroSlider({ slides = defaultSlides }: { slides?: Slide[
           transition={{ duration: 0.5 }}
           className="absolute inset-0"
         >
-<img
+          
+<Image
   src={slides[currentSlide].image}
   alt={slides[currentSlide].title}
-  className="w-full h-full object-cover object-center md:object-[center_20%] transition-all duration-700"  // Key: object-position focus on upper body/face
-  style={{
-    objectPosition: 'center 20%'  // Adjust per image if needed (20-35% top bias for portraits)
+  fill
+  priority
+  className="object-cover object-[center_25%]"  // Tune % to keep faces/heads visible
+  sizes="100vw"
+  style={{ objectPosition: 'center 25%' }}
+/>ctPosition: 'center 20%'  // Adjust per image if needed (20-35% top bias for portraits)
   }}
 />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
